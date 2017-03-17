@@ -35,6 +35,7 @@
 #' @return A S3 object of class \code{mbmdrc}.
 #'
 #' @export
+#' @import data.table
 mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
                    top.results = 10, folds, cv.loss) {
 

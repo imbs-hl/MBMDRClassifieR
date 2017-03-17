@@ -2,3 +2,4 @@
 
 S3method(predict,mbmdrc)
 export(mbmdrc)
+import(data.table)
