@@ -52,10 +52,10 @@ mbmdr <- function(data, order = 2L, alpha = 0.1, max.results = 100) {
   while (sum(model)) {
 
     # Get HLO table
-    counts <- Step1(data = data, model = model, mu = mu, alpha = alpha)
+    counts <- Step1(data = data, model = model, mu = mu, N = N, alpha = alpha)
 
     # Get model table
-    model_counts <- Step2(counts = counts, mu = mu)
+    model_counts <- Step2(counts = counts, mu = mu, N = N)
 
     # Create model name
     model_name <- colnames(data)[model + 1]
@@ -118,6 +118,8 @@ mbmdr <- function(data, order = 2L, alpha = 0.1, max.results = 100) {
 #'               The feature combination to consider.
 #' @param mu     [\code{double}]\cr
 #'               The overall case to control ratio.
+#' @param N      [\code{int}]\cr
+#'               The total sample size.
 #' @param alpha  [\code{double}]\cr
 #'               The significane level.
 #'
@@ -125,7 +127,7 @@ mbmdr <- function(data, order = 2L, alpha = 0.1, max.results = 100) {
 #' model. The columns contain the counts of cases and controls, the case ratio in
 #' the genotype combination, the case ratio in all other genotype combinations,
 #' the chi-square statistic, the corresponding p value and a class label.
-Step1 <- function(data, model, mu, alpha) {
+Step1 <- function(data, model, mu, N, alpha) {
 
   tables <- data.table::melt(table(data[, c(model + 1, 1)]))
 
@@ -158,12 +160,14 @@ Step1 <- function(data, model, mu, alpha) {
 #' @param counts  [\code{data.table}]\cr
 #'                Output of \code{\link{Step1}}.
 #' @param mu      [\code{double}]\cr
-#'               The overall case to control ratio.#'
+#'               The overall case to control ratio.
+#' @param N      [\code{int}]\cr
+#'               The total sample size.
 #'
 #' @return A \code{data.table} object, containing the counts of cases and controls
 #' in each class of H, L or O, their respective ratios in and not in the class and
 #' the chi-square test statistic.
-Step2 <- function(counts, mu) {
+Step2 <- function(counts, mu, N) {
 
   model_counts <- counts[, .(controls = sum(controls), cases = sum(cases)), by = label]
 
