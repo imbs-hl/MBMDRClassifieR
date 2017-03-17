@@ -129,7 +129,7 @@ Step1 <- function(data, model, mu, alpha) {
 
   tables <- data.table::melt(table(data[, c(model + 1, 1)]))
 
-  counts <- dcast(tables, ...~pheno)
+  counts <- data.table::as.data.table(data.table::dcast(tables, ...~pheno))
   data.table::setnames(counts, c("0", "1"), c("controls", "cases"))
 
   counts[, n1 := cases + controls]
