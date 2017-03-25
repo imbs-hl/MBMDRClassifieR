@@ -10,13 +10,13 @@ NextModel(model, k, order, j = order)
 \item{model}{[\code{integer}]\cr
 The current model.}
 
-\item{k}{[\code{integer}]\cr
+\item{k}{[\code{int}]\cr
 Total number of features.}
 
-\item{order}{[\code{integer}]\cr
+\item{order}{[\code{int}]\cr
 Interaction order.}
 
-\item{j}{[\code{integer}]\cr
+\item{j}{[\code{int}]\cr
 The model position to increase. If called, this is usually the
 interaction order.}
 }

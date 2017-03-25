@@ -4,7 +4,7 @@
 \alias{Step1}
 \title{Calculate HLO matrix}
 \usage{
-Step1(data, model, mu, alpha)
+Step1(data, model, mu, N, alpha)
 }
 \arguments{
 \item{data}{[\code{data.frame}]\cr
@@ -15,6 +15,9 @@ The feature combination to consider.}
 
 \item{mu}{[\code{double}]\cr
 The overall case to control ratio.}
+
+\item{N}{[\code{int}]\cr
+The total sample size.}
 
 \item{alpha}{[\code{double}]\cr
 The significane level.}

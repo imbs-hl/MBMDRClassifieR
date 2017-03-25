@@ -4,14 +4,17 @@
 \alias{Step2}
 \title{Assess significance of model}
 \usage{
-Step2(counts, mu)
+Step2(counts, mu, N)
 }
 \arguments{
 \item{counts}{[\code{data.table}]\cr
 Output of \code{\link{Step1}}.}
 
 \item{mu}{[\code{double}]\cr
-The overall case to control ratio.#'}
+The overall case to control ratio.}
+
+\item{N}{[\code{int}]\cr
+The total sample size.}
 }
 \value{
 A \code{data.table} object, containing the counts of cases and controls
