@@ -100,6 +100,8 @@ mbmdr <- function(data, order = 2L, alpha = 0.1, max.results = 100) {
                 order = order,
                 alpa = alpha,
                 max.results = max.results)
+
+  # Set class
   class(mbmdr) <- "mbmdr"
 
   return(mbmdr)
