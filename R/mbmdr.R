@@ -144,7 +144,7 @@ Step1 <- function(data, model, mu, N, alpha) {
 
   counts[, S := 1/(mu*(1-mu))*(n1*(y1-mu)^2+n0*(y0-mu)^2)]
 
-  counts[, p := pchisq(S, df = 1, lower.tail = FALSE)]
+  counts[, p := stats::pchisq(S, df = 1, lower.tail = FALSE)]
 
   counts[, label := "O"]
   counts[p<alpha & y1>y0, label := "H"]
@@ -192,17 +192,25 @@ Step2 <- function(counts, mu, N) {
 #'
 #' @param model [\code{integer}]\cr
 #'              The current model.
-#' @param k     [\code{integer}]\cr
+#' @param k     [\code{int}]\cr
 #'              Total number of features.
-#' @param order [\code{integer}]\cr
+#' @param order [\code{int}]\cr
 #'              Interaction order.
-#' @param j     [\code{integer}]\cr
+#' @param j     [\code{int}]\cr
 #'              The model position to increase. If called, this is usually the
 #'              interaction order.
 #'
 #' @return A \code{integer} vector of features. If the last model is reached,
 #' \code{FALSE} is returned.
 NextModel <- function(model, k, order, j = order) {
+
+  # Input checks
+  assertions <- checkmate::makeAssertCollection()
+  checkmate::assertInt(k, add = assertions, lower = 1L)
+  checkmate::assertInteger(model, add = assertions, lower = 0L, upper = k)
+  checkmate::assertInt(order, add = assertions, lower = 1L)
+  checkmate::assertInt(j, add = assertions, lower = 1L)
+  checkmate::reportAssertions(assertions)
 
   # Check if last model is reached
   if (all(model == rev(k - (0L:(order - 1L))))) {
