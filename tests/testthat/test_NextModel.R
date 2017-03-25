@@ -104,3 +104,49 @@ test_that("NextModel stops", {
                                            j = order))
 
 })
+
+test_that("NextModel throws errors if input is invalid", {
+
+  # Negative column count
+  k <- -10L
+  order <- 2L
+  model <- c(1L, 2L)
+  expect_error(MBMDRClassifieR:::NextModel(model = model,
+                                           k = k,
+                                           order = order,
+                                           j = order))
+
+  # Negative order
+  k <- 10L
+  order <- -2L
+  model <- c(1L, 2L)
+  expect_error(MBMDRClassifieR:::NextModel(model = model,
+                                           k = k,
+                                           order = order,
+                                           j = order))
+
+  # Negative position
+  k <- 10L
+  order <- 2L
+  model <- c(1L, 2L)
+  j <- -1L
+  expect_error(MBMDRClassifieR:::NextModel(model = model,
+                                           k = k,
+                                           order = order,
+                                           j = j))
+
+  # Model is incorrectly specified
+  k <- 10L
+  order <- 2L
+  model <- c(1L, 11L)
+  expect_error(MBMDRClassifieR:::NextModel(model = model,
+                                           k = k,
+                                           order = order,
+                                           j = order))
+  model <- c(-1L, 2L)
+  expect_error(MBMDRClassifieR:::NextModel(model = model,
+                                           k = k,
+                                           order = order,
+                                           j = order))
+
+})
