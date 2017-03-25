@@ -85,6 +85,8 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
     # Split the data
     data$fold <- sample(1:folds, nrow(data), replace = TRUE)
 
+    browser()
+
     # Calculate the MB-MDR for each fold and assess current top.results value
     cv_performance <- sapply(1:folds, function(f) {
 
@@ -107,11 +109,10 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
     })
 
     # Select top.results value with optimal loss
-    top.results <- top_results[which.max(mean_cv_performance)]
+    top.results <- top_results[which.max(rowMeans(cv_performance))]
 
     # Save CV results
     mbmdrc$cv_performance <- cv_performance
-    mbmdrc$mean_cv_performance <- mean(cv_performance)
 
   }
 
