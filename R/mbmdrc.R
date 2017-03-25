@@ -95,7 +95,7 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
       # Perform CV for each possible value for top.results
       sapply(top_results, function(tr) {
         # Predict the status for current top.results value on leave out data
-        pred <- predict(mbmdr, data[data$fold == f, -ncol(data)],
+        pred <- stats::predict(mbmdr, data[data$fold == f, -ncol(data)],
                         top.results = tr, type = pred_type)
 
         # Calculate CV loss
@@ -105,6 +105,9 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
       })
 
     })
+
+    # Remove fold column
+    data$fold <- NULL
 
     # Select top.results value with optimal loss
     top.results <- top_results[which.max(rowMeans(cv_performance))]
@@ -251,7 +254,7 @@ predict.mbmdrc <- function(object, newdata, type = "response", o.as.na = TRUE, t
 
   top.results <- min(nrow(object$result), top.results)
 
-  predict(object$mbmdr, newdata = newdata, type = type, na.O = na.O, top.results = top.results)
+  stats::predict(object$mbmdr, newdata = newdata, type = type, na.O = na.O, top.results = top.results)
 
 }
 
