@@ -81,20 +81,22 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
       top_results <- top.results
     }
 
-    # Perform CV for each possible value for top.results
-    cv_performance <- sapply(top_results, function(tr) {
 
-      # Split the data
-      data$fold <- sample(1:folds, nrow(data), replace = TRUE)
+    # Split the data
+    data$fold <- sample(1:folds, nrow(data), replace = TRUE)
 
-      # Calculate the MB-MDR for each fold and assess current top.results value
-      sapply(1:folds, function(f) {
+    # Calculate the MB-MDR for each fold and assess current top.results value
+    cv_performance <- sapply(1:folds, function(f) {
 
-        # Generate MB-MDR models on training data
-        mbmdr <- mbmdr(data[data$fold != f, -ncol(data)], order, alpha, max.results)
+      # Generate MB-MDR models on training data
+      mbmdr <- mbmdr(data[data$fold != f, -ncol(data)],
+                     order, alpha, max.results)
 
+      # Perform CV for each possible value for top.results
+      sapply(top_results, function(tr) {
         # Predict the status for current top.results value on leave out data
-        pred <- predict(mbmdr, data[data$fold == f, -ncol(data)], top.results = tr, type = pred_type)
+        pred <- predict(mbmdr, data[data$fold == f, -ncol(data)],
+                        top.results = tr, type = pred_type)
 
         # Calculate CV loss
         measure(pred$predictions, truth = data[data$fold == f, "pheno"],
