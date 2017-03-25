@@ -85,8 +85,6 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
     # Split the data
     data$fold <- sample(1:folds, nrow(data), replace = TRUE)
 
-    browser()
-
     # Calculate the MB-MDR for each fold and assess current top.results value
     cv_performance <- sapply(1:folds, function(f) {
 
