@@ -88,7 +88,7 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
     # Calculate the MB-MDR for each fold and assess current top.results value
     cv_performance <- sapply(1:folds, function(f) {
 
-      # Generate MB-MDR models on training data
+      # Generate MB-MDR models on CV training data
       mbmdr <- mbmdr(data[data$fold != f, -ncol(data)],
                      order, alpha, max.results)
 
@@ -129,7 +129,7 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
   # Save function call
   mbmdrc$call <- sys.call()
 
-
+  # Set class
   class(mbmdrc) <- "mbmdrc"
 
   return(mbmdrc)
@@ -177,7 +177,7 @@ predict.mbmdr <- function(object, newdata, type = "response", o.as.na = TRUE, to
   data <- data.table::as.data.table(newdata, keep.rownames = "ID")
 
   # Ensure correct order of MB-MDR models
-  setorderv(object$result, "STATISTIC", order = -1L)
+  setorderv(object$result, "STATISTIC", order = -1L, na.last = TRUE)
 
   # Get case probability for all sample genotypes for the first top.results models
   model_names <- sapply(object$result[1:top.results, MODEL],
