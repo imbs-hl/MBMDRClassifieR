@@ -12,7 +12,9 @@ Imports:
     data.table,
     mlr,
     stats,
-    checkmate
+    checkmate,
+    Rcpp
 Suggests:
     testthat
 RoxygenNote: 5.0.1
+LinkingTo: Rcpp

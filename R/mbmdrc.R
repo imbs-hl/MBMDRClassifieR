@@ -36,6 +36,8 @@
 #'
 #' @export
 #' @import data.table
+#' @useDynLib MBMDRClassifieR
+#' @importFrom Rcpp sourceCpp
 mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
                    top.results = 10, folds, cv.loss) {
 
