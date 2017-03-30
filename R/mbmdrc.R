@@ -55,11 +55,11 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
   y <- factor(mf[, 1], labels = c(0, 1))
 
   # Bind data and outcome
-  data <- cbind(pheno = y, data)
+  data <- data.table::data.table(pheno = y, data, keep.rownames = "ID")
 
   # Replace top.results with highest value possible based on order and number of
   # columns
-  top.results <- min(choose(ncol(data) -1 , order), top.results)
+  top.results <- min(choose(ncol(data) - 2, order), top.results)
 
   if(!missing(folds) & !missing(cv.loss)) {
     # Enter CV to determine optimal top.results
@@ -81,36 +81,37 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
       top_results <- top.results
     }
 
-
     # Split the data
-    data$fold <- sample(1:folds, nrow(data), replace = TRUE)
+    data[, `:=`(fold = sample(1:folds, .N, replace = TRUE))]
 
     # Calculate the MB-MDR for each fold and assess current top.results value
-    cv_performance <- sapply(1:folds, function(f) {
+    cv_performance <- rbindlist(lapply(1:folds, function(f) {
 
       # Generate MB-MDR models on CV training data
-      mbmdr <- mbmdr(data[data$fold != f, -ncol(data)],
+      mbmdr <- mbmdr(data[fold != f, -c("fold", "ID")],
                      order, alpha, max.results)
 
-      # Perform CV for each possible value for top.results
-      sapply(top_results, function(tr) {
-        # Predict the status for current top.results value on leave out data
-        pred <- stats::predict(mbmdr, data[data$fold == f, -ncol(data)],
-                        top.results = tr, type = pred_type)
+      pred <- predict.mbmdr(mbmdr, data[fold == f, -"fold"],
+                            top.results = max(top.results),
+                            all = TRUE, type = pred_type)
 
-        # Calculate CV loss
-        measure(pred$predictions, truth = data[data$fold == f, "pheno"],
-                positive = 1, negative = 0)
+      pred <- melt(pred, id.vars = "ID",
+                   variable.name = "top.results",
+                   value.name = pred_type)
 
-      })
+      pred[, .(cv_loss = measure(get(pred_type),
+                                 data[fold == f, "pheno"],
+                                 positive = 1,
+                                 negative = 0)), by = "top.results"]
 
-    })
+    }), id = "fold")
 
     # Remove fold column
-    data$fold <- NULL
+    data[, fold := NULL]
 
     # Select top.results value with optimal loss
-    top.results <- top_results[which.max(rowMeans(cv_performance))]
+    top.results <- cv_performance[, .(mean_cv_loss = mean(cv_loss)),
+                                  by = top.results][, which.max(mean_cv_loss)]
 
     # Save CV results
     mbmdrc$cv_performance <- cv_performance
@@ -118,7 +119,7 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
   }
 
   # Train MB-MDR on the full dataset
-  mbmdr <- mbmdr(data = data,
+  mbmdr <- mbmdr(data = data[, -"ID"],
                  order = order,
                  alpha = alpha,
                  max.results = max.results)
@@ -174,7 +175,7 @@ mbmdrc <- function(formula, data, order = 2, alpha = 0.1, max.results = 100,
 #' been just too few observations in the training data so that \code{NA} might
 #' be more reasonable as contribution to \code{response} and \code{prob} type
 #' predictions.
-predict.mbmdr <- function(object, newdata, type = "response", o.as.na = TRUE, top.results, ...) {
+predict.mbmdr <- function(object, newdata, type = "response", top.results, all = FALSE, ...) {
 
   # Convert data to a data.table object, keep rownames
   data <- data.table::as.data.table(newdata, keep.rownames = "ID")
@@ -183,8 +184,15 @@ predict.mbmdr <- function(object, newdata, type = "response", o.as.na = TRUE, to
   setorderv(object$result, "STATISTIC", order = -1L, na.last = TRUE)
 
   # Get case probability for all sample genotypes for the first top.results models
-  model_names <- sapply(object$result[1:top.results, MODEL],
-                        function(model) {
+  model_names <- unlist(sapply(1:top.results,
+                        function(idx) {
+                          if(object$result[idx, is.na(STATISTIC)]) {
+                            return()
+                          }
+
+                          # Extract model
+                          model <- object$result[idx, MODEL][[1]]
+
                           # Extract HLO table
                           hlo_table <- object$hlo_tables[[paste(model, collapse = ",")]]
 
@@ -208,41 +216,76 @@ predict.mbmdr <- function(object, newdata, type = "response", o.as.na = TRUE, to
                           data[, names(hlo_table)[-(1:object$order)] := list(NULL)]
 
                           return(model_name)
-                        })
+                        }))
 
   # Transform data to long format, drop original genotypes, keep case probabilities
-  data <- melt(data, id.vars = c("ID", "pheno"),
+  data <- melt(data, id.vars = c("ID"),
                measure.vars = model_names,
                variable.name = "MODEL",
                value.name = "PROB")
 
-  # If requested by user, replace case probabilities in O genotype combinations
-  # with 0.5, which is the null hypothesis
-  if(!o.as.na) {
-    data[is.na(PROB), PROB := 0.5]
-  }
+  # Replace case probabilities in O genotype combinations with 0.5, which is the
+  # null hypothesis
+  data[is.na(PROB), PROB := 0.5]
 
-  if(type == "response") {
-    # Round the mean case probability to 0 or 1 to return hard classification
-    return(data[, .(predictions = round(mean(PROB, na.rm = TRUE))),
-                by = c("ID")])
-  }
-  if(type == "prob") {
-    # Return mean case probability over all models
-    return(data[, .(predictions = mean(PROB, na.rm = TRUE)),
-                by = c("ID")])
-  }
-  if(type == "score") {
-    # Return a risk score. Genotype combinations classified as H contribute +1,
-    # genotype combinations classified as L contribute -1 and genotype combinations
-    # classified as O contribute 0
-    return(data[, .(predictions = sum(round(PROB)*2-1, na.rm = TRUE)),
-                by = c("ID")])
-  }
-  if(type == "scoreprob") {
-    # Return the score transformed to a [0, 1] interval
-    return(data[, .(predictions = range01(sum(round(PROB)*2-1, na.rm = TRUE))),
-                by = c("ID")])
+  if(all) {
+
+    model_ranking <- data.table(MODEL = model_names, RANK = seq_along(model_names))
+    data[model_ranking, RANK := i.RANK, on = "MODEL"]
+
+    if(type == "response") {
+      # Round the mean case probability to 0 or 1 to return hard classification
+      return(dcast(data[, .(RESPONSE = round(cumsum(PROB)/1:max(RANK)),
+                            TOPRESULTS = 1:max(RANK)), by = c("ID") ],
+                   ID~TOPRESULTS, value.var = "RESPONSE"))
+    }
+    if(type == "prob") {
+      # Return mean case probability over all models for all top.results
+      return(dcast(data[, .(PROB = cumsum(PROB)/1:max(RANK),
+                            TOPRESULTS = 1:max(RANK)), by = c("ID") ],
+                   ID~TOPRESULTS, value.var = "PROB"))
+    }
+    if(type == "score") {
+      # Return a risk score. Genotype combinations classified as H contribute +1,
+      # genotype combinations classified as L contribute -1 and genotype combinations
+      # classified as O contribute 0
+      return(dcast(data[, .(SCORE = cumsum(round(PROB)*2-1),
+                            TOPRESULTS = 1:max(RANK)), by = c("ID") ],
+                   ID~TOPRESULTS, value.var = "SCORE"))
+    }
+    if(type == "scoreprob") {
+      # Return the score transformed to a [0, 1] interval
+      return(dcast(data[, .(SCORE = cumsum(round(PROB)*2-1),
+                            TOPRESULTS = 1:max(RANK)), by = c("ID")][, SCOREPROB := range01(SCORE),
+                                                                       by = c("TOPRESULTS")],
+                   ID~TOPRESULTS,
+                   value.var = "SCOREPROB"))
+    }
+
+  } else {
+
+    if(type == "response") {
+      # Round the mean case probability to 0 or 1 to return hard classification
+      return(data[, .(predictions = round(mean(PROB, na.rm = TRUE))),
+                  by = c("ID")])
+    }
+    if(type == "prob") {
+      # Return mean case probability over all models
+      return(data[, .(predictions = mean(PROB, na.rm = TRUE)),
+                  by = c("ID")])
+    }
+    if(type == "score") {
+      # Return a risk score. Genotype combinations classified as H contribute +1,
+      # genotype combinations classified as L contribute -1 and genotype combinations
+      # classified as O contribute 0
+      return(data[, .(predictions = sum(round(PROB)*2-1, na.rm = TRUE)),
+                  by = c("ID")])
+    }
+    if(type == "scoreprob") {
+      # Return the score transformed to a [0, 1] interval
+      return(data[, .(predictions = sum(round(PROB)*2-1, na.rm = TRUE)),
+                  by = c("ID")][, .(ID, predictions = range01(predictions))])
+    }
   }
 
 }
@@ -250,11 +293,11 @@ predict.mbmdr <- function(object, newdata, type = "response", o.as.na = TRUE, to
 #' @rdname predict.mbmdr
 #'
 #' @export
-predict.mbmdrc <- function(object, newdata, type = "response", o.as.na = TRUE, top.results = object$top.results, ...) {
+predict.mbmdrc <- function(object, newdata, type = "response", top.results = object$top.results, all = FALSE, ...) {
 
   top.results <- min(nrow(object$result), top.results)
 
-  stats::predict(object$mbmdr, newdata = newdata, type = type, na.O = na.O, top.results = top.results)
+  stats::predict(object$mbmdr, newdata = newdata, type = type, top.results = top.results, all = all)
 
 }
 

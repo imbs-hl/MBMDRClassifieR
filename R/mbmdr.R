@@ -22,16 +22,16 @@
 mbmdr <- function(data, order = 2L, alpha = 0.1, max.results = 100) {
 
   # Count the cases
-  cases <- sum(data$pheno == 1)
+  cases <- data[pheno == 1, .N]
 
   # Total sample size
-  N <- nrow(data)
+  N <- data[, .N]
 
   # Number of features
   k <- ncol(data) - 1
 
   # Case ratio under null hypothesis
-  mu <- sum(cases)/N
+  mu <- cases/N
 
   # Ensure integer type of interaction order
   order <- as.integer(order)
@@ -64,7 +64,7 @@ mbmdr <- function(data, order = 2L, alpha = 0.1, max.results = 100) {
     # Use -99 to enable sorting if we are in the degenerative case of only NAs
     # as test statistics (which results in NaN and destroyes sorting)
     result[max.results + 1, c("MODEL", "STATISTIC") := list(list(model),
-                                                            max(-99, model_counts[, max(S, na.rm = TRUE)]))]
+                                                            model_counts[, max(-99, S, na.rm = TRUE)])]
 
     # Sort the results
     setorderv(result, "STATISTIC", order = -1L)
@@ -131,9 +131,11 @@ mbmdr <- function(data, order = 2L, alpha = 0.1, max.results = 100) {
 #' the chi-square statistic, the corresponding p value and a class label.
 Step1 <- function(data, model, mu, N, alpha) {
 
-  tables <- data.table::melt(table(data[, c(model + 1, 1)]))
-
-  counts <- data.table::as.data.table(data.table::dcast(tables, ...~pheno))
+  counts <- data.table::dcast(data[, .N,
+                                   by = eval(colnames(data)[c(model +1, 1)])],
+                              ...~pheno,
+                              value.var = "N",
+                              fill = 0)
   data.table::setnames(counts, c("0", "1"), c("controls", "cases"))
 
   counts[, n1 := cases + controls]
