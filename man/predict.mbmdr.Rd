@@ -5,11 +5,11 @@
 \alias{predict.mbmdrc}
 \title{MB-MDR classifier prediction}
 \usage{
-\method{predict}{mbmdr}(object, newdata, type = "response", o.as.na = TRUE,
-  top.results, ...)
+\method{predict}{mbmdr}(object, newdata, type = "response", top_results,
+  all = FALSE, ...)
 
-\method{predict}{mbmdrc}(object, newdata, type = "response", o.as.na = TRUE,
-  top.results = object$top.results, ...)
+\method{predict}{mbmdrc}(object, newdata, type = "response",
+  top_results = object$top_results, all = FALSE, ...)
 }
 \arguments{
 \item{object}{[\code{mbmdr}]\cr
@@ -23,15 +23,15 @@ Type of prediction. One of \code{response}, \code{prob},
 \code{score} or \code{scoreprob}. See details.
 Default is \code{response}.}
 
+\item{top_results}{[\code{int}]\cr
+How many models are used for prediction.}
+
+\item{...}{Further arguments passed to or from other methods.}
+
 \item{o.as.na}{[\code{bool}]\cr
 Indicates how to handle samples in O classified genotype
 combinations. See details.
 Default is \code{TRUE}.}
-
-\item{top.results}{[\code{int}]\cr
-How many models are used for prediction.}
-
-\item{...}{Further arguments passed to or from other methods.}
 }
 \value{
 A \code{data.table} object with an ID column and the prediction value.

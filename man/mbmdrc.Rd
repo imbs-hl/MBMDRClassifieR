@@ -4,8 +4,9 @@
 \alias{mbmdrc}
 \title{MB-MDR based classifier}
 \usage{
-mbmdrc(formula, data, order = 2, alpha = 0.1, max.results = 100,
-  top.results = 10, folds, cv.loss)
+mbmdrc(formula, data, order = 2, alpha = 0.1, max_results = 100,
+  top_results = 10, folds, cv_loss, dependent_variable_name, num_threads,
+  verbose)
 }
 \arguments{
 \item{formula}{[\code{formula}]\cr
@@ -24,11 +25,11 @@ in the MB-MDR algorithm.}
 Single numeric as significance level used during HLO
 classification of genotype combinations.}
 
-\item{max.results}{[\code{int}]\cr
+\item{max_results}{[\code{int}]\cr
 Single integer specifying the number of top models to
 report.}
 
-\item{top.results}{[\code{int} or \code{integer}]\cr
+\item{top_results}{[\code{int} or \code{integer}]\cr
 Single integer specifying how many models shall be used
 for prediction. If \code{folds} and \code{cv.loss} are
 set, this value specifies the upper limit of top results
@@ -37,12 +38,21 @@ result values to assess in CV.}
 
 \item{folds}{[\code{int}]\cr
 Single interger specifying how many folds for internal
-cross validation to find optimal \code{top.results}
+cross validation to find optimal \code{top_results}
 should be used.}
 
-\item{cv.loss}{[\code{character}]\cr
+\item{cv_loss}{[\code{character}]\cr
 One of \code{auc} or \code{bac}, specifying which loss
-should be used to find optimal \code{top.results}.}
+should be used to find optimal \code{top_results}.}
+
+\item{num_threads}{[\code{int}]\cr
+Number of threads. Default is number of CPUs available.}
+
+\item{verbose}{[\code{int}]\cr
+Level of verbosity. Default is level 1 giving some basic
+information about progress. Level 0 will switch off any
+output. Levels 2 and 3 are for debugging purposes.
+Level 3 disables multithreading.}
 }
 \value{
 A S3 object of class \code{mbmdrc}.
