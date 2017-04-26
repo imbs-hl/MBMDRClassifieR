@@ -22,7 +22,8 @@ public:
 			size_t max_models,
 			size_t mode,
 			size_t num_threads,
-			std::vector<std::ostream*> v_levels);
+			std::vector<std::ostream*> v_levels,
+			Rcpp::List saved_mbmdr);
 
 	virtual ~Mbmdr();
 

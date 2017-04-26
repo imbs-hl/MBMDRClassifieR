@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // mbmdrCpp
-Rcpp::List mbmdrCpp(size_t pred_type, Rcpp::IntegerMatrix& input_data, Rcpp::NumericVector& response, std::vector<std::string> variable_names, size_t order, double alpha, size_t max_results, size_t top_results, size_t num_threads, size_t verbose);
-RcppExport SEXP MBMDRClassifieR_mbmdrCpp(SEXP pred_typeSEXP, SEXP input_dataSEXP, SEXP responseSEXP, SEXP variable_namesSEXP, SEXP orderSEXP, SEXP alphaSEXP, SEXP max_resultsSEXP, SEXP top_resultsSEXP, SEXP num_threadsSEXP, SEXP verboseSEXP) {
+Rcpp::List mbmdrCpp(size_t pred_type, Rcpp::IntegerMatrix& input_data, Rcpp::NumericVector& response, std::vector<std::string> variable_names, size_t order, double alpha, size_t max_results, size_t top_results, size_t num_threads, size_t verbose, Rcpp::List saved_mbmdr);
+RcppExport SEXP MBMDRClassifieR_mbmdrCpp(SEXP pred_typeSEXP, SEXP input_dataSEXP, SEXP responseSEXP, SEXP variable_namesSEXP, SEXP orderSEXP, SEXP alphaSEXP, SEXP max_resultsSEXP, SEXP top_resultsSEXP, SEXP num_threadsSEXP, SEXP verboseSEXP, SEXP saved_mbmdrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,7 +21,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< size_t >::type top_results(top_resultsSEXP);
     Rcpp::traits::input_parameter< size_t >::type num_threads(num_threadsSEXP);
     Rcpp::traits::input_parameter< size_t >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(mbmdrCpp(pred_type, input_data, response, variable_names, order, alpha, max_results, top_results, num_threads, verbose));
+    Rcpp::traits::input_parameter< Rcpp::List >::type saved_mbmdr(saved_mbmdrSEXP);
+    rcpp_result_gen = Rcpp::wrap(mbmdrCpp(pred_type, input_data, response, variable_names, order, alpha, max_results, top_results, num_threads, verbose, saved_mbmdr));
     return rcpp_result_gen;
 END_RCPP
 }

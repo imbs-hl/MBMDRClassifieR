@@ -11,7 +11,8 @@ Rcpp::List mbmdrCpp(size_t pred_type,
 		size_t order, double alpha,
 		size_t max_results, size_t top_results,
 		size_t num_threads,
-		size_t verbose) {
+		size_t verbose,
+		Rcpp::List saved_mbmdr) {
 
 	Rcpp::List result;
 	Mbmdr* mbmdr = 0;
@@ -53,7 +54,8 @@ Rcpp::List mbmdrCpp(size_t pred_type,
 				max_results,
 				pred_type,
 				num_threads,
-				v_levels);
+				v_levels,
+				saved_mbmdr);
 
 		// Fit MB-MDR models
 		*v_levels[0] << "Fitting models..." << std::endl;

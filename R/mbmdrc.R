@@ -31,7 +31,7 @@
 #' @param cv_loss       			[\code{character}]\cr
 #'                      			One of \code{auc} or \code{bac}, specifying which loss
 #'                      			should be used to find optimal \code{top_results}.
-#' @param dependent.variable.name	[\code{string]\cr
+#' @param dependent.variable.name	[\code{string}]\cr
 #' 									Name of dependent variable, needed if no formula given.
 #' @param num_threads				[\code{int}]\cr
 #' 									Number of threads. Default is number of CPUs available.
@@ -139,13 +139,15 @@ mbmdrc <- function(formula, data,
 	rm("data_selected")
 	
 	# Call C++ ----
+	saved_mbmdr <- list()
 	result <- mbmdrCpp(pred_type,
 			data_final, response,
 			variable_names,
 			order, alpha,
 			max_results, top_results,
 			num_threads,
-			verbose)
+			verbose,
+			saved_mbmdr)
 	
 	result$call <- sys.call()
 	result$num_samples <- nrow(data_final)

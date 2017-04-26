@@ -53,6 +53,9 @@ Level of verbosity. Default is level 1 giving some basic
 information about progress. Level 0 will switch off any
 output. Levels 2 and 3 are for debugging purposes.
 Level 3 disables multithreading.}
+
+\item{dependent.variable.name}{[\code{string}]\cr
+Name of dependent variable, needed if no formula given.}
 }
 \value{
 A S3 object of class \code{mbmdrc}.

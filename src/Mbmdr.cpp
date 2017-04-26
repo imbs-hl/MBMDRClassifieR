@@ -23,7 +23,8 @@ Mbmdr::Mbmdr(Data* data,
 		size_t max_models,
 		size_t mode,
 		size_t num_threads,
-		std::vector<std::ostream*> v_levels) {
+		std::vector<std::ostream*> v_levels,
+		Rcpp::List saved_mbmdr) {
 	this->mode = mode;
 	this->data = data;
 	this->order = order;
@@ -42,6 +43,11 @@ Mbmdr::Mbmdr(Data* data,
 	}
 
 	this->v_levels = v_levels;
+
+	// Load saved MB-MDR object
+	if(saved_mbmdr.size() > 0) {
+
+	}
 }
 
 Mbmdr::~Mbmdr() {
