@@ -32,3 +32,10 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 .Rproj.user
+
+# Eclipse
+/Debug/
+.cproject
+.project
+.settings
+src/main.cpp
