@@ -14,24 +14,38 @@ class Mbmdr {
 
 public:
 
+	// Constructors
 	Mbmdr();
-
 	Mbmdr(Data* data,
 			size_t order,
 			double alpha,
 			size_t max_models,
 			size_t mode,
 			size_t num_threads,
-			std::vector<std::ostream*> v_levels,
-			Rcpp::List saved_mbmdr);
+			std::vector<std::ostream*> v_levels);
+	Mbmdr(Data* data,
+			Rcpp::List saved_mbmdr,
+			size_t num_threads,
+			std::vector<std::ostream*> v_levels);
 
+	// Destructor
 	virtual ~Mbmdr();
 
+	// Function to fit MB-MDR models
 	void fit();
 
-	void predict();
+	// Function to predict MB-MDR models
+	std::vector<double> predict();
 
 	Rcpp::List exportModels();
+
+	// Getters
+	uint getMode();
+	size_t getOrder();
+	size_t getN();
+	double getAlpha();
+	size_t getMaxModels();
+	std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrs> getModels();
 
 protected:
 
@@ -56,10 +70,14 @@ protected:
 
 	// Vector of feature models
 	size_t max_models;
+	size_t num_models;
 	std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrs> models;
 
 	// Current feature combination
 	std::vector<size_t> feature_combination;
+
+	// Predictions
+	std::vector<double> predictions;
 
 	// Add feature model to to priority queue, eventually replace model with lowest statistic
 	void possiblyAdd(Model* new_model);
@@ -72,6 +90,7 @@ protected:
 
 private:
 	void fitModelInThread();
+	void predictInThread();
 
 	DISALLOW_COPY_AND_ASSIGN(Mbmdr);
 

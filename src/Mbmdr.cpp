@@ -9,10 +9,12 @@ order(0),
 n(0),
 alpha(0),
 max_models(0),
+num_models(0),
 feature_combination(0),
+predictions(0),
 v_levels(0) {
 	this->mode = 1;
-	this->models = std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrs>();
+	this->models = std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrsGreater>();
 
 	this->threads = 1;
 }
@@ -23,15 +25,97 @@ Mbmdr::Mbmdr(Data* data,
 		size_t max_models,
 		size_t mode,
 		size_t num_threads,
-		std::vector<std::ostream*> v_levels,
-		Rcpp::List saved_mbmdr) {
+		std::vector<std::ostream*> v_levels) {
 	this->mode = mode;
 	this->data = data;
 	this->order = order;
 	this->alpha = alpha;
 	this->max_models = max_models;
+	this->num_models = 0;
 	this->n = data->getNumObservations();
-	this->models = std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrs>();
+	this->models = std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrsGreater>();
+	this->feature_combination = std::vector<size_t>(order);
+	std::fill(this->feature_combination.begin(), this->feature_combination.end(), 0);
+	this->predictions = std::vector<double>(0);
+
+	if(num_threads == DEFAULT_NUM_THREADS) {
+		// Detect cores
+		this->threads = std::thread::hardware_concurrency();
+	} else {
+		this->threads = num_threads;
+	}
+
+	this->v_levels = v_levels;
+}
+
+Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
+		size_t num_threads,
+		std::vector<std::ostream*> v_levels) {
+	// Check if input is of correct type
+	try {
+		if(!saved_mbmdr.inherits("mbmdr")) {
+			throw std::runtime_error("");
+		}
+	} catch (...) {
+		throw std::runtime_error("Object must be a MB-MDR object.");
+	}
+
+	this->data = data;
+	this->n = data->getNumObservations();
+	this->predictions = std::vector<double>(n);
+	this->models = std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrsLess>();
+
+	// Construct new models from saved MB-MDR object
+	try {
+		this->mode = saved_mbmdr["mode"];
+		this->order = saved_mbmdr["order"];
+		this->alpha = saved_mbmdr["alpha"];
+		this->max_models = saved_mbmdr["max_models"];
+
+		Rcpp::List models = saved_mbmdr["models"];
+
+		this->num_models = models.size();
+
+		for(int i = 0; i < models.size(); ++i) {
+			Rcpp::List rcpp_model = models[i];
+
+			double order = rcpp_model["order"];
+			std::vector<size_t> features = rcpp_model["features"];
+			double alpha = rcpp_model["alpha"];
+			std::vector<uint> in_cell = rcpp_model["in_cell"];
+			std::vector<uint> out_cell = rcpp_model["out_cell"];
+			std::vector<double> cell_predictions = rcpp_model["cell_predictions"];
+			std::vector<double> cell_statistics = rcpp_model["cell_statistics"];
+			std::vector<double> cell_pvalues = rcpp_model["cell_pvalues"];
+			std::vector<int> cell_labels = rcpp_model["cell_labels"];
+			double statistic = rcpp_model["statistic"];
+			double pvalue = rcpp_model["pvalue"];
+
+			Model* model;
+
+			if(mode == 1) {
+				// Create classification model
+				*v_levels[2] << "Creating classification model..." << std::endl;
+				model = new ModelClassification(data,
+						order,
+						features,
+						alpha,
+						v_levels);
+			} else if(mode == 2) {
+				// Create regression model
+				*v_levels[2] << "Creating regression model..." << std::endl;
+			}
+
+			model->loadModel(in_cell, out_cell, cell_predictions, cell_statistics, cell_pvalues, cell_labels, statistic, pvalue);
+
+			possiblyAdd(model);
+
+		}
+
+	} catch(...) {
+		throw std::runtime_error("Failed loading MB-MDR object.");
+	}
+
 	this->feature_combination = std::vector<size_t>(order);
 	std::fill(this->feature_combination.begin(), this->feature_combination.end(), 0);
 
@@ -43,11 +127,6 @@ Mbmdr::Mbmdr(Data* data,
 	}
 
 	this->v_levels = v_levels;
-
-	// Load saved MB-MDR object
-	if(saved_mbmdr.size() > 0) {
-
-	}
 }
 
 Mbmdr::~Mbmdr() {
@@ -126,7 +205,6 @@ bool Mbmdr::getNextFeatureCombination(size_t j) {
 
 }
 
-
 // [[Rcpp::plugins(cpp11)]]
 void Mbmdr::fit() {
 
@@ -135,7 +213,7 @@ void Mbmdr::fit() {
 	std::vector<std::thread> thread_pool;
 	thread_pool.reserve(threads);
 
-	// Add threds to thread pool
+	// Add threads to thread pool
 	for(size_t t=0; t<threads; ++t) {
 		*v_levels[2] << "Adding thread..." << std::endl;
 		thread_pool.push_back(std::thread(&Mbmdr::fitModelInThread, this));
@@ -164,6 +242,9 @@ void Mbmdr::fitModelInThread() {
 				*v_levels[2] << col << " ";
 			}
 			*v_levels[2] << "..." << std::endl;
+
+			// Increase model counter
+			++num_models;
 		} else {
 			*v_levels[2] << "No further feature combinations available!" << std::endl;
 			break;
@@ -213,6 +294,7 @@ Rcpp::List Mbmdr::exportModels() {
 		export_model_object.push_back(model->getFeatures(), "features");
 		export_model_object.push_back(model->getObservationsInCell(), "in_cell");
 		export_model_object.push_back(model->getObservationsOutCell(), "out_cell");
+		export_model_object.push_back(model->getCellPredictions(), "cell_predictions");
 		export_model_object.push_back(model->getCellStatistics(), "cell_statistics");
 		export_model_object.push_back(model->getCellPValues(), "cell_pvalues");
 		export_model_object.push_back(model->getCellLabels(), "cell_labels");
@@ -233,4 +315,78 @@ Rcpp::List Mbmdr::exportModels() {
 
 	return export_object;
 
+}
+
+
+// [[Rcpp::plugins(cpp11)]]
+std::vector<double> Mbmdr::predict() {
+
+	// Create thread pool
+	*v_levels[1] << "Creating thread pool..." << std::endl;
+	std::vector<std::thread> thread_pool;
+	thread_pool.reserve(threads);
+
+	// Add threads to thread pool
+	for(size_t t=0; t<threads; ++t) {
+		*v_levels[2] << "Adding thread..." << std::endl;
+		thread_pool.push_back(std::thread(&Mbmdr::predictInThread, this));
+	}
+
+	// Wait for completion
+	*v_levels[1] << "Waiting for threads to complete..." << std::endl;
+	for(auto &thread : thread_pool) {
+		thread.join();
+	}
+
+	for(uint i = 0; i < predictions.size(); ++i) {
+		predictions[i] /= num_models;
+	}
+
+	return predictions;
+
+}
+
+void Mbmdr::predictInThread() {
+
+	while(!models.empty()) {
+
+		// Feed thread with next model
+		std::unique_lock<std::mutex> lock(mutex);
+		Model* model = models.top();
+		models.pop();
+		lock.unlock();
+
+		// Predict sample outcomes in model
+		std::vector<double> model_predictions = model->predict();
+
+		// Add predictions
+		lock.lock();
+		*v_levels[2] << "Saving predictions..." << std::endl;
+		for(uint i = 0; i < predictions.size(); ++i) {
+			predictions[i] += model_predictions[i];
+		}
+		lock.unlock();
+		delete model;
+	}
+
+}
+
+// Getters
+uint Mbmdr::getMode() {
+	return this->mode;
+}
+size_t Mbmdr::getOrder() {
+	return this->order;
+}
+size_t Mbmdr::getN() {
+	return this->n;
+}
+double Mbmdr::getAlpha() {
+	return this->alpha;
+}
+size_t Mbmdr::getMaxModels() {
+	return this->max_models;
+}
+std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrs> Mbmdr::getModels() {
+	return this->models;
 }

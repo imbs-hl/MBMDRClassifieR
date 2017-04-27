@@ -19,8 +19,6 @@ public:
 
 	void fit();
 
-	void predict();
-
 protected:
 
 	// Cases per genotype combination

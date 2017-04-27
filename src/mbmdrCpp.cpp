@@ -48,40 +48,52 @@ Rcpp::List mbmdrCpp(size_t pred_type,
 
 		// Initialize MB-MDR
 		*v_levels[1] << "Initializing MB-MDR..." << std::endl;
-		mbmdr = new Mbmdr(data,
-				order,
-				alpha,
-				max_results,
-				pred_type,
-				num_threads,
-				v_levels,
-				saved_mbmdr);
+		if(saved_mbmdr.size() > 0) {
+			// Load saved MB-MDR object
+			*v_levels[2] << "Loading saved MB-MDR..." << std::endl;
+			mbmdr = new Mbmdr(data, saved_mbmdr,
+					num_threads,
+					v_levels);
+		} else {
+			// Create new MB-MDR object
+			*v_levels[2] << "Creating new MB-MDR..." << std::endl;
+			mbmdr = new Mbmdr(data,
+					order,
+					alpha,
+					max_results,
+					pred_type,
+					num_threads,
+					v_levels);
+		}
 
 		// Fit MB-MDR models
 		*v_levels[0] << "Fitting models..." << std::endl;
 		mbmdr->fit();
 
-		// Export MB-MDR objects
+		// Export MB-MDR object
 		*v_levels[1] << "Exporting top models..." << std::endl;
 		Rcpp::List mbmdr_object;
 		mbmdr_object.push_back(mbmdr->exportModels(), "models");
-		result.push_back(mbmdr_object);
+		mbmdr_object.push_back(mbmdr->getAlpha(), "alpha");
+		mbmdr_object.push_back(mbmdr->getMaxModels(), "max_models");
+		mbmdr_object.push_back(mbmdr->getMode(), "mode");
+		mbmdr_object.push_back(mbmdr->getOrder(), "order");
+		mbmdr_object.attr("class") = "mbmdr";
+		result.push_back(mbmdr_object, "mbmdr");
 
-		delete mbmdr;
-		delete data;
-		for (std::vector<std::ostream*>::iterator it = v_levels.begin() ; it != v_levels.end(); ++it) {
-			delete (*it);
-		}
+
 	} catch(std::exception& e) {
 		if(strcmp(e.what(), "User interrupt.") != 0) {
 			Rcpp::Rcerr << e.what() << " MBMDRClassifieR will EXIT now." << std::endl;
 		}
-		delete mbmdr;
-		delete data;
-		for (std::vector<std::ostream*>::iterator it = v_levels.begin() ; it != v_levels.end(); ++it) {
-			delete (*it);
+	}
+
+	delete mbmdr;
+	delete data;
+	for (auto stream : v_levels) {
+		if(stream != &std::cout) {
+			delete stream;
 		}
-		return result;
 	}
 
 	return result;

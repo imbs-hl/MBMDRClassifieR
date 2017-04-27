@@ -9,22 +9,37 @@ class Model {
 
 public:
 
+	// Constructors
 	Model();
-
 	Model(Data* data,
 			size_t order,
 			std::vector<size_t> features,
 			double alpha,
 			std::vector<std::ostream*> v_levels);
 
+	// Destructor
 	virtual ~Model();
 
+	// Function to fit feature model
 	virtual void fit() = 0;
 
-	virtual void predict() = 0;
+	// Function to predict outcome given a fitted feature model
+	std::vector<double> predict();
 
+	// Construct model from saved object
+	void loadModel(std::vector<uint> in_cell,
+			std::vector<uint> out_cell,
+			std::vector<double> cell_predictions,
+			std::vector<double> cell_statistics,
+			std::vector<double> cell_pvalues,
+			std::vector<int> cell_labels,
+			double statistic,
+			double pvalue);
+
+	// Getters
 	std::vector<uint> getObservationsInCell() const;
 	std::vector<uint> getObservationsOutCell() const;
+	std::vector<double> getCellPredictions() const;
 	std::vector<double> getCellStatistics() const;
 	std::vector<double> getCellPValues() const;
 	std::vector<int> getCellLabels() const;
@@ -57,6 +72,9 @@ protected:
 
 	// Total observations in all other genotype combinations per genotype combination
 	std::vector<uint> out_cell;
+
+	// Cell predictions
+	std::vector<double> cell_predictions;
 
 	// Test statistic per cell
 	std::vector<double> cell_statistics;
@@ -91,9 +109,15 @@ private:
 };
 
 // Comparisons of feature models
-struct CmpModelPtrs {
+struct CmpModelPtrs {bool operator()(const Model* lhs, const Model* rhs) const;};
+struct CmpModelPtrsGreater : CmpModelPtrs {
 	bool operator()(const Model* lhs, const Model* rhs) const {
 		return lhs->getModelStatistic() > rhs->getModelStatistic();
+	}
+};
+struct CmpModelPtrsLess : CmpModelPtrs {
+	bool operator()(const Model* lhs, const Model* rhs) const {
+		return lhs->getModelStatistic() < rhs->getModelStatistic();
 	}
 };
 

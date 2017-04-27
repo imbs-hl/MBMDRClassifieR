@@ -12,8 +12,8 @@ ModelClassification::ModelClassification(Data* data,
 		std::vector<size_t> features,
 		double alpha,
 		std::vector<std::ostream*> v_levels) :
-														  Model(data, order, features, alpha, v_levels),
-														  mu(0) {
+				Model(data, order, features, alpha, v_levels),
+				mu(0) {
 	size_t idxs = pow(3, order);
 	for(size_t i = 0; i < idxs; ++i) {
 		this->cases.push_back(0);
@@ -34,10 +34,6 @@ void ModelClassification::fit() {
 	classifyCells();
 	*v_levels[2] << "Calculating model statistic..." << std::endl;
 	calculateModelTestStatistic();
-}
-
-void ModelClassification::predict() {
-	std::cout << "TODO: predict function" << std::endl;
 }
 
 void ModelClassification::getCounts() {
@@ -105,6 +101,7 @@ void ModelClassification::classifyCells() {
 
 		// Proportion of cases in cell
 		case_prob_in_cell[i] = (double)cases[i] / (double)in_cell[i];
+		cell_predictions[i] = case_prob_in_cell[i];
 
 		// Proportion of cases not in cell
 		case_prob_out_cell[i] = (double)(sum_of_cases - cases[i]) / (double)out_cell[i];
