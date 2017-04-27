@@ -1,10 +1,6 @@
 ## Use c++11
 CXX_STD = CXX11
 PKG_CPPFLAGS = -DR_BUILD
-
-CCACHE=ccache
-CC=$(CCACHE) gcc$(VER)
-CXX=$(CCACHE) g++$(VER)
-SHLIB_CXXLD=g++$(VER)
-FC=ccache gfortran$(VER)
-F77=$(CCACHE) gfortran$(VER)
+CC=ccache clang -Qunused-arguments
+CXX=ccache clang++ -Qunused-arguments
+CCACHE_CPP2=yes
