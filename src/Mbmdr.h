@@ -46,6 +46,7 @@ public:
 	double getAlpha();
 	size_t getMaxModels();
 	std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> getModels();
+	std::unordered_set<std::string> getModelFeatureNames();
 
 protected:
 
@@ -72,6 +73,7 @@ protected:
 	size_t max_models;
 	size_t num_models;
 	std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> models;
+	std::unordered_set<std::string> model_feature_names;
 
 	// Current feature combination
 	std::vector<size_t> feature_combination;

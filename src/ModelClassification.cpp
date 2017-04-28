@@ -23,6 +23,23 @@ ModelClassification::ModelClassification(Data* data,
 	}
 }
 
+ModelClassification::ModelClassification(Data* data,
+		size_t order,
+		std::vector<size_t> features,
+		std::vector<std::string> feature_names,
+		double alpha,
+		std::vector<std::ostream*> v_levels) :
+				Model(data, order, features, feature_names, alpha, v_levels),
+				mu(0) {
+	size_t idxs = pow(3, order);
+	for(size_t i = 0; i < idxs; ++i) {
+		this->cases.push_back(0);
+		this->controls.push_back(0);
+		this->case_prob_in_cell.push_back(0);
+		this->case_prob_out_cell.push_back(0);
+	}
+}
+
 ModelClassification::~ModelClassification() {
 	// Empty on purpose
 }

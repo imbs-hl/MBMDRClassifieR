@@ -34,6 +34,7 @@ Mbmdr::Mbmdr(Data* data,
 	this->num_models = 0;
 	this->n = data->getNumObservations();
 	this->models = std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers>();
+	this->model_feature_names = std::unordered_set<std::string>();
 	this->feature_combination = std::vector<size_t>(order);
 	std::fill(this->feature_combination.begin(), this->feature_combination.end(), 0);
 	this->predictions = std::vector<double>(0);
@@ -60,10 +61,15 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 		throw std::runtime_error("Object must be a MB-MDR object.");
 	}
 
-	this->data = data;
-	this->n = data->getNumObservations();
-	this->predictions = std::vector<double>(n);
-	this->models = std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers>(CompareModelPointers(true));
+	try {
+		this->data = data;
+		this->n = data->getNumObservations();
+		this->predictions = std::vector<double>(n);
+		std::fill(this->predictions.begin(), this->predictions.end(), 0);
+		this->models = std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers>(CompareModelPointers(true));
+	} catch (...) {
+		throw std::runtime_error("Initialization of MB-MDR object failed.");
+	}
 
 	// Construct new models from saved MB-MDR object
 	try {
@@ -79,6 +85,7 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 
 			double order = rcpp_model["order"];
 			std::vector<size_t> features = rcpp_model["features"];
+			std::vector<std::string> feature_names = rcpp_model["feature_names"];
 			double alpha = rcpp_model["alpha"];
 			std::vector<uint> in_cell = rcpp_model["in_cell"];
 			std::vector<uint> out_cell = rcpp_model["out_cell"];
@@ -97,6 +104,7 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 				model = new ModelClassification(data,
 						order,
 						features,
+						feature_names,
 						alpha,
 						v_levels);
 			} else if(mode == 2) {
@@ -106,7 +114,7 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 
 			model->loadModel(in_cell, out_cell, cell_predictions, cell_statistics, cell_pvalues, cell_labels, statistic, pvalue);
 
-			possiblyAdd(model);
+			this->models.push(model);
 
 		}
 
@@ -149,25 +157,31 @@ void Mbmdr::possiblyAdd(Model* new_model) {
 	if(models.size() < max_models) {
 		*v_levels[2] << "Queue not full yet. Adding new model..." << std::endl;
 		models.push(new_model);
-		return;
+	} else {
+		// Get model statistic of model with lowest statistic in queue
+		double top_model_statistic = models.top()->getModelStatistic();
+		*v_levels[2] << "Statistic of model at top position: " << top_model_statistic << std::endl;
+		if(new_model_statistic > top_model_statistic) {
+			// get rid of the root, i.e. feature model with lowest statistic
+			*v_levels[2] << "Adding new model..." << std::endl;
+			Model* model = models.top();
+			models.pop();
+			delete model;
+
+			// Add new model
+			models.push(new_model);
+		} else {
+			// new model has lower statistic than all other models
+			*v_levels[2] << "Discarding new model..." << std::endl;
+			delete new_model;
+			return;
+		}
 	}
 
-	// Get model statistic of model with lowest statistic in queue
-	double top_model_statistic = models.top()->getModelStatistic();
-	*v_levels[2] << "Statistic of model at top position: " << top_model_statistic << std::endl;
-	if(new_model_statistic > top_model_statistic) {
-		// get rid of the root, i.e. feature model with lowest statistic
-		*v_levels[2] << "Adding new model..." << std::endl;
-		Model* model = models.top();
-		models.pop();
-		delete model;
-
-		// Add new model
-		models.push(new_model);
-	} else {
-		// new model has lower statistic than all other models
-		*v_levels[2] << "Discarding new model..." << std::endl;
-		delete new_model;
+	// Adding feature names to set
+	std::vector<size_t> features = new_model->getFeatures();
+	for(size_t o = 0; o < order; ++o) {
+		model_feature_names.insert(data->getFeatureName(features[o]));
 	}
 }
 
@@ -230,12 +244,14 @@ void Mbmdr::fit() {
 
 void Mbmdr::fitModelInThread() {
 
+	std::vector<size_t> feature_combination;
+
 	while(true) {
 
 		// Feed thread with next feature combination
 		std::unique_lock<std::mutex> lock(mutex);
 		if(getNextFeatureCombination(order-1)) {
-			std::vector<size_t> feature_combination = this->feature_combination;
+			feature_combination = this->feature_combination;
 
 			*v_levels[2] << "Calculating feature combination ";
 			for(auto &col : feature_combination) {
@@ -292,6 +308,7 @@ Rcpp::List Mbmdr::exportModels() {
 
 		// Fill model export object
 		export_model_object.push_back(model->getFeatures(), "features");
+		export_model_object.push_back(model->getFeatureNames(), "feature_names");
 		export_model_object.push_back(model->getObservationsInCell(), "in_cell");
 		export_model_object.push_back(model->getObservationsOutCell(), "out_cell");
 		export_model_object.push_back(model->getCellPredictions(), "cell_predictions");
@@ -362,7 +379,7 @@ void Mbmdr::predictInThread() {
 		// Add predictions
 		lock.lock();
 		*v_levels[2] << "Saving predictions..." << std::endl;
-		for(uint i = 0; i < predictions.size(); ++i) {
+		for(size_t i = 0; i < predictions.size(); ++i) {
 			predictions[i] += model_predictions[i];
 		}
 		lock.unlock();
@@ -389,4 +406,7 @@ size_t Mbmdr::getMaxModels() {
 }
 std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> Mbmdr::getModels() {
 	return this->models;
+}
+std::unordered_set<std::string> Mbmdr::getModelFeatureNames() {
+	return this->model_feature_names;
 }

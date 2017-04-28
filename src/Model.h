@@ -16,6 +16,12 @@ public:
 			std::vector<size_t> features,
 			double alpha,
 			std::vector<std::ostream*> v_levels);
+	Model(Data* data,
+			size_t order,
+			std::vector<size_t> features,
+			std::vector<std::string> feature_names,
+			double alpha,
+			std::vector<std::ostream*> v_levels);
 
 	// Destructor
 	virtual ~Model();
@@ -47,6 +53,7 @@ public:
 	double getModelPValue() const;
 	size_t getOrder() const;
 	std::vector<size_t> getFeatures() const;
+	std::vector<std::string> getFeatureNames() const;
 	size_t getNumObservations() const;
 	double getAlpha() const;
 
@@ -60,6 +67,7 @@ protected:
 
 	// Features used in this feature model
 	std::vector<size_t> features;
+	std::vector<std::string> feature_names;
 
 	// Total observations
 	size_t n;

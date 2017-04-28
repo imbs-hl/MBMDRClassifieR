@@ -39,7 +39,7 @@
 #' 									Level of verbosity. Default is level 1 giving some basic
 #' 									information about progress. Level 0 will switch off any
 #' 									output. Levels 2 and 3 are for debugging purposes.
-#' 									Level 3 disables multithreading. 
+#' 									Level 3 disables multithreading.
 #'
 #' @return A S3 object of class \code{mbmdrc}.
 #'
@@ -76,7 +76,7 @@ mbmdrc <- function(formula, data,
 	if(missing(verbose)) {
 		verbose <- 1
 	} else {
-		checkmate::assertChoice(verbose, choices = 0:3,
+		checkmate::assertInt(verbose, lower = 0, upper = 3,
 				add = assertions)
 	}
 	
@@ -142,7 +142,6 @@ mbmdrc <- function(formula, data,
 	saved_mbmdr <- list()
 	result <- mbmdrCpp(pred_type,
 			data_final, response,
-			variable_names,
 			order, alpha,
 			max_results, top_results,
 			num_threads,
@@ -153,6 +152,7 @@ mbmdrc <- function(formula, data,
 	result$num_samples <- nrow(data_final)
 	result$num_features <- ncol(data_final)
 	result$num_combinations <- choose(ncol(data_final), order)
+	result$pred_type <- pred_type
 	
 	class(result) <- "mbmdrc"
 	
@@ -195,129 +195,58 @@ mbmdrc <- function(formula, data,
 #' been just too few observations in the training data so that \code{NA} might
 #' be more reasonable as contribution to \code{response} and \code{prob} type
 #' predictions.
-predict.mbmdr <- function(object, newdata, type = "response", top_results, all = FALSE, ...) {
-	
-	# Convert data to a data.table object, keep rownames
-	data <- data.table::as.data.table(newdata, keep.rownames = "ID")
-	
-	# Ensure correct order of MB-MDR models
-	setorderv(object$result, "STATISTIC", order = -1L, na.last = TRUE)
-	
-	# Get case probability for all sample genotypes for the first top_results models
-	model_names <- unlist(sapply(1:top_results,
-					function(idx) {
-						if(object$result[idx, is.na(STATISTIC)]) {
-							return()
-						}
-						
-						# Extract model
-						model <- object$result[idx, MODEL][[1]]
-						
-						# Extract HLO table
-						hlo_table <- object$hlo_tables[[paste(model, collapse = ",")]]
-						
-						# Create model name from feature names
-						model_name <- paste(names(hlo_table)[1:object$order], collapse = ".")
-						
-						# Merge the data with the HLO table
-						data <<- merge(data, hlo_table,
-								by = names(hlo_table)[1:object$order],
-								sort = FALSE, all.x = TRUE)
-						
-						# Add a new column containing the case probabilities
-						# for all samples
-						data[, c(model_name) := list(y1)]
-						
-						# Set case probability to NA if genotype combination
-						# is classified as O (not significant)
-						data[label == "O", c(model_name) := list(NA)]
-						
-						# Remove obsolete columns
-						data[, names(hlo_table)[-(1:object$order)] := list(NULL)]
-						
-						return(model_name)
-					}))
-	
-	# Transform data to long format, drop original genotypes, keep case probabilities
-	data <- melt(data, id.vars = c("ID"),
-			measure.vars = model_names,
-			variable.name = "MODEL",
-			value.name = "PROB")
-	
-	# Replace case probabilities in O genotype combinations with 0.5, which is the
-	# null hypothesis
-	data[is.na(PROB), PROB := 0.5]
-	
-	if(all) {
-		
-		model_ranking <- data.table(MODEL = model_names, RANK = seq_along(model_names))
-		data[model_ranking, RANK := i.RANK, on = "MODEL"]
-		
-		if(type == "response") {
-			# Round the mean case probability to 0 or 1 to return hard classification
-			return(dcast(data[, .(RESPONSE = round(cumsum(PROB)/1:max(RANK)),
-											TOPRESULTS = 1:max(RANK)), by = c("ID") ],
-							ID~TOPRESULTS, value.var = "RESPONSE"))
-		}
-		if(type == "prob") {
-			# Return mean case probability over all models for all top_results
-			return(dcast(data[, .(PROB = cumsum(PROB)/1:max(RANK),
-											TOPRESULTS = 1:max(RANK)), by = c("ID") ],
-							ID~TOPRESULTS, value.var = "PROB"))
-		}
-		if(type == "score") {
-			# Return a risk score. Genotype combinations classified as H contribute +1,
-			# genotype combinations classified as L contribute -1 and genotype combinations
-			# classified as O contribute 0
-			return(dcast(data[, .(SCORE = cumsum(round(PROB)*2-1),
-											TOPRESULTS = 1:max(RANK)), by = c("ID") ],
-							ID~TOPRESULTS, value.var = "SCORE"))
-		}
-		if(type == "scoreprob") {
-			# Return the score transformed to a [0, 1] interval
-			return(dcast(data[, .(SCORE = cumsum(round(PROB)*2-1),
-											TOPRESULTS = 1:max(RANK)), by = c("ID")][, SCOREPROB := range01(SCORE),
-									by = c("TOPRESULTS")],
-							ID~TOPRESULTS,
-							value.var = "SCOREPROB"))
-		}
-		
-	} else {
-		
-		if(type == "response") {
-			# Round the mean case probability to 0 or 1 to return hard classification
-			return(data[, .(predictions = round(mean(PROB, na.rm = TRUE))),
-							by = c("ID")])
-		}
-		if(type == "prob") {
-			# Return mean case probability over all models
-			return(data[, .(predictions = mean(PROB, na.rm = TRUE)),
-							by = c("ID")])
-		}
-		if(type == "score") {
-			# Return a risk score. Genotype combinations classified as H contribute +1,
-			# genotype combinations classified as L contribute -1 and genotype combinations
-			# classified as O contribute 0
-			return(data[, .(predictions = sum(round(PROB)*2-1, na.rm = TRUE)),
-							by = c("ID")])
-		}
-		if(type == "scoreprob") {
-			# Return the score transformed to a [0, 1] interval
-			return(data[, .(predictions = sum(round(PROB)*2-1, na.rm = TRUE)),
-							by = c("ID")][, .(ID, predictions = range01(predictions))])
-		}
-	}
-	
-}
-
-#' @rdname predict.mbmdr
 #'
 #' @export
-predict.mbmdrc <- function(object, newdata, type = "response", top_results = object$top_results, all = FALSE, ...) {
+predict.mbmdrc <- function(object, newdata, type = "response", top_results, num_threads, verbose, ...) {
 	
-	top_results <- min(nrow(object$result), top_results)
+	# Input checks ----
+	assertions <- checkmate::makeAssertCollection()
 	
-	stats::predict(object$mbmdr, newdata = newdata, type = type, top_results = top_results, all = all)
+	checkmate::assertClass(object, "mbmdrc",
+			add = assertions)
+	checkmate::assertDataFrame(newdata,
+			add = assertions)
+	checkmate::assertSubset(object$mbmdr$feature_names, colnames(newdata))
+	checkmate::assertChoice(type, choices = c("response", "prob", "score", "scoreprob"),
+			add = assertions)
+	if(!missing(top_results)) {
+		checkmate::assertInt(top_results, lower = 1,
+				add = assertions)
+	}
+	if(!missing(num_threads)) {
+		checkmate::assertInt(num_threads, lower = 0,
+				add = assertions)
+	}
+	if(missing(verbose)) {
+		verbose <- 1
+	} else {
+		checkmate::assertInt(verbose, lower = 0, upper = 3,
+				add = assertions)
+	}
+	
+	checkmate::reportAssertions(assertions)
+	
+	# Extract information ----
+	mbmdr <- object$mbmdr
+	pred_type <- object$pred_type
+	response <- factor(sample(0:1, n, TRUE))
+	order <- mbmdr$order
+	alpha <- mbmdr$alpha
+	max_results <- mbmdr$max_models
+	
+	# Prepare data ----
+	data_final <- data.matrix(newdata[, mbmdr$feature_names])
+	
+	# Call C++ ----
+	predictions <- mbmdrCpp(pred_type,
+			data_final, response,
+			order, alpha,
+			max_results, top_results,
+			num_threads,
+			verbose,
+			mbmdr)
+	
+	return(predictions)
 	
 }
 

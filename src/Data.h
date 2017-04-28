@@ -23,6 +23,11 @@ public:
 
 	// Get feature data of a sample
 	int getFeature(size_t sample, size_t feature);
+	int getFeature(size_t sample, std::string feature);
+
+	// Get feature names
+	std::string getFeatureName(size_t feature);
+	std::unordered_map<std::string, size_t> getFeatureNames();
 
 protected:
 
@@ -31,6 +36,9 @@ protected:
 
 	// Independent features
 	Rcpp::IntegerMatrix& data;
+
+	// Column names
+	std::unordered_map<std::string, size_t> feature_names;
 
 	// Number of observations
 	size_t n_obs;

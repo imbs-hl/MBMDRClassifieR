@@ -2,7 +2,7 @@
 #include "Model.h"
 #include <math.h>
 
-Model::Model() : data(0), order(0), features(0), n(0), alpha(0), in_cell(0), out_cell(0), cell_predictions(0), cell_statistics(0), cell_pvalues(0), cell_labels(0), statistic(0), pvalue(0), v_levels(0) {
+Model::Model() : data(0), order(0), features(0), feature_names(0), n(0), alpha(0), in_cell(0), out_cell(0), cell_predictions(0), cell_statistics(0), cell_pvalues(0), cell_labels(0), statistic(0), pvalue(0), v_levels(0) {
 }
 
 Model::Model(Data* data,
@@ -10,6 +10,28 @@ Model::Model(Data* data,
 		std::vector<size_t> features,
 		double alpha,
 		std::vector<std::ostream*> v_levels) : data(data), order(order), features(features), n(0), alpha(alpha), statistic(0), pvalue(0) {
+	size_t idxs = pow(3, order);
+	for(size_t i = 0; i < idxs; ++i) {
+		this->in_cell.push_back(0);
+		this->out_cell.push_back(0);
+		this->cell_predictions.push_back(0);
+		this->cell_statistics.push_back(0);
+		this->cell_pvalues.push_back(0);
+		this->cell_labels.push_back(0);
+	}
+	for(size_t o = 0; o < order; ++o) {
+		std::string feature_name = data->getFeatureName(features[o]);
+		this->feature_names.push_back(feature_name);
+	}
+	this->v_levels = v_levels;
+}
+
+Model::Model(Data* data,
+		size_t order,
+		std::vector<size_t> features,
+		std::vector<std::string> feature_names,
+		double alpha,
+		std::vector<std::ostream*> v_levels) : data(data), order(order), features(features), feature_names(feature_names), n(0), alpha(alpha), statistic(0), pvalue(0) {
 	size_t idxs = pow(3, order);
 	for(size_t i = 0; i < idxs; ++i) {
 		this->in_cell.push_back(0);
@@ -56,6 +78,9 @@ size_t Model::getOrder() const {
 std::vector<size_t> Model::getFeatures() const {
 	return this->features;
 }
+std::vector<std::string> Model::getFeatureNames() const {
+	return this->feature_names;
+}
 size_t Model::getNumObservations() const {
 	return this->n;
 }
@@ -101,7 +126,7 @@ std::vector<double> Model::predict() {
 		// Get genotype combination
 		std::vector<uint> genotype(order);
 		for(size_t j = 0; j < order; ++j) {
-			genotype[j] = data->getFeature(i, features[j]);
+			genotype[j] = data->getFeature(i, feature_names[j]);
 		}
 		// Convert genotype combination to index
 		int idx = std::inner_product(genotype.begin(), genotype.end(), bases.begin(), 0);

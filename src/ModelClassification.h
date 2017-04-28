@@ -7,16 +7,25 @@
 class ModelClassification: public Model {
 
 public:
-	ModelClassification();
 
+	// Constructors
+	ModelClassification();
 	ModelClassification(Data* data,
 			size_t order,
 			std::vector<size_t> features,
 			double alpha,
 			std::vector<std::ostream*> v_levels);
+	ModelClassification(Data* data,
+			size_t order,
+			std::vector<size_t> features,
+			std::vector<std::string> feature_names,
+			double alpha,
+			std::vector<std::ostream*> v_levels);
 
+	// Destructor
 	virtual ~ModelClassification();
 
+	// Fit method
 	void fit();
 
 protected:
