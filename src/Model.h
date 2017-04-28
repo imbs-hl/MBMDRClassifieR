@@ -109,15 +109,18 @@ private:
 };
 
 // Comparisons of feature models
-struct CmpModelPtrs {bool operator()(const Model* lhs, const Model* rhs) const;};
-struct CmpModelPtrsGreater : CmpModelPtrs {
-	bool operator()(const Model* lhs, const Model* rhs) const {
-		return lhs->getModelStatistic() > rhs->getModelStatistic();
+class CompareModelPointers {
+	bool reverse;
+public:
+	CompareModelPointers(const bool& revparam = false) {
+		reverse = revparam;
 	}
-};
-struct CmpModelPtrsLess : CmpModelPtrs {
-	bool operator()(const Model* lhs, const Model* rhs) const {
-		return lhs->getModelStatistic() < rhs->getModelStatistic();
+	bool operator() (const Model* lhs, const Model* rhs) const {
+		if (reverse) {
+			return (lhs->getModelStatistic() < rhs->getModelStatistic());
+		} else {
+			return (lhs->getModelStatistic() > rhs->getModelStatistic());
+		}
 	}
 };
 

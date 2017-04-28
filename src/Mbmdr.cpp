@@ -14,7 +14,7 @@ feature_combination(0),
 predictions(0),
 v_levels(0) {
 	this->mode = 1;
-	this->models = std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrsGreater>();
+	this->models = std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers>();
 
 	this->threads = 1;
 }
@@ -33,7 +33,7 @@ Mbmdr::Mbmdr(Data* data,
 	this->max_models = max_models;
 	this->num_models = 0;
 	this->n = data->getNumObservations();
-	this->models = std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrsGreater>();
+	this->models = std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers>();
 	this->feature_combination = std::vector<size_t>(order);
 	std::fill(this->feature_combination.begin(), this->feature_combination.end(), 0);
 	this->predictions = std::vector<double>(0);
@@ -63,7 +63,7 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 	this->data = data;
 	this->n = data->getNumObservations();
 	this->predictions = std::vector<double>(n);
-	this->models = std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrsLess>();
+	this->models = std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers>(CompareModelPointers(true));
 
 	// Construct new models from saved MB-MDR object
 	try {
@@ -73,8 +73,6 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 		this->max_models = saved_mbmdr["max_models"];
 
 		Rcpp::List models = saved_mbmdr["models"];
-
-		this->num_models = models.size();
 
 		for(int i = 0; i < models.size(); ++i) {
 			Rcpp::List rcpp_model = models[i];
@@ -111,6 +109,8 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 			possiblyAdd(model);
 
 		}
+
+		this->num_models = this->models.size();
 
 	} catch(...) {
 		throw std::runtime_error("Failed loading MB-MDR object.");
@@ -387,6 +387,6 @@ double Mbmdr::getAlpha() {
 size_t Mbmdr::getMaxModels() {
 	return this->max_models;
 }
-std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrs> Mbmdr::getModels() {
+std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> Mbmdr::getModels() {
 	return this->models;
 }

@@ -45,7 +45,7 @@ public:
 	size_t getN();
 	double getAlpha();
 	size_t getMaxModels();
-	std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrs> getModels();
+	std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> getModels();
 
 protected:
 
@@ -71,7 +71,7 @@ protected:
 	// Vector of feature models
 	size_t max_models;
 	size_t num_models;
-	std::priority_queue<Model*, std::vector<Model*>, CmpModelPtrs> models;
+	std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> models;
 
 	// Current feature combination
 	std::vector<size_t> feature_combination;
