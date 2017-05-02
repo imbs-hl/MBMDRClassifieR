@@ -9,10 +9,11 @@ cases(0), controls(0), mu(0) {
 
 ModelClassification::ModelClassification(Data* data,
 		size_t order,
+		size_t model_index,
 		std::vector<size_t> features,
 		double alpha,
-		std::vector<std::ostream*> v_levels) :
-				Model(data, order, features, alpha, v_levels),
+		Logger* logger) :
+				Model(data, order, model_index, features, alpha, logger),
 				mu(0) {
 	size_t idxs = pow(3, order);
 	for(size_t i = 0; i < idxs; ++i) {
@@ -25,11 +26,12 @@ ModelClassification::ModelClassification(Data* data,
 
 ModelClassification::ModelClassification(Data* data,
 		size_t order,
+		size_t model_index,
 		std::vector<size_t> features,
 		std::vector<std::string> feature_names,
 		double alpha,
-		std::vector<std::ostream*> v_levels) :
-				Model(data, order, features, feature_names, alpha, v_levels),
+		Logger* logger) :
+				Model(data, order, model_index, features, feature_names, alpha, logger),
 				mu(0) {
 	size_t idxs = pow(3, order);
 	for(size_t i = 0; i < idxs; ++i) {
@@ -45,11 +47,11 @@ ModelClassification::~ModelClassification() {
 }
 
 void ModelClassification::fit() {
-	*v_levels[2] << "Calculating cell counts..." << std::endl;
+	logger->log(Info, "Calculating cell counts", 3);
 	getCounts();
-	*v_levels[2] << "Classifying cells..." << std::endl;
+	logger->log(Info, "Classifying cells", 3);
 	classifyCells();
-	*v_levels[2] << "Calculating model statistic..." << std::endl;
+	logger->log(Info, "Calculating model statistic", 3);
 	calculateModelTestStatistic();
 }
 
@@ -65,7 +67,7 @@ void ModelClassification::getCounts() {
 	}
 
 	// Iterate through all samples in dataset
-	*v_levels[2] << "Iterating through samples..." << std::endl;
+	logger->log(Info, "Iterating through samples...", 3);
 	for(size_t i = 0; i < n_obs; ++i) {
 
 		// Get genotype combination

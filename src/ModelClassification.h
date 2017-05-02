@@ -12,15 +12,17 @@ public:
 	ModelClassification();
 	ModelClassification(Data* data,
 			size_t order,
+			size_t model_index,
 			std::vector<size_t> features,
 			double alpha,
-			std::vector<std::ostream*> v_levels);
+			Logger* logger);
 	ModelClassification(Data* data,
 			size_t order,
+			size_t model_index,
 			std::vector<size_t> features,
 			std::vector<std::string> feature_names,
 			double alpha,
-			std::vector<std::ostream*> v_levels);
+			Logger* logger);
 
 	// Destructor
 	virtual ~ModelClassification();

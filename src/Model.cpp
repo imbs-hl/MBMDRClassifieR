@@ -1,20 +1,21 @@
 
-#include "Model.h"
 #include <math.h>
+#include "Model.h"
 
-Model::Model() : data(0), order(0), features(0), feature_names(0), n(0), alpha(0), in_cell(0), out_cell(0), cell_predictions(0), cell_statistics(0), cell_pvalues(0), cell_labels(0), statistic(0), pvalue(0), v_levels(0) {
+Model::Model() : data(0), order(0), model_index(0), features(0), feature_names(0), n(0), alpha(0), in_cell(0), out_cell(0), cell_predictions(0), cell_statistics(0), cell_pvalues(0), cell_labels(0), statistic(0), pvalue(0), logger(0) {
 }
 
 Model::Model(Data* data,
 		size_t order,
+		size_t model_index,
 		std::vector<size_t> features,
 		double alpha,
-		std::vector<std::ostream*> v_levels) : data(data), order(order), features(features), n(0), alpha(alpha), statistic(0), pvalue(0) {
+		Logger* logger) : data(data), order(order), model_index(model_index), features(features), n(0), alpha(alpha), statistic(0), pvalue(0) {
 	size_t idxs = pow(3, order);
 	for(size_t i = 0; i < idxs; ++i) {
 		this->in_cell.push_back(0);
 		this->out_cell.push_back(0);
-		this->cell_predictions.push_back(0);
+		this->cell_predictions.push_back(0.5);
 		this->cell_statistics.push_back(0);
 		this->cell_pvalues.push_back(0);
 		this->cell_labels.push_back(0);
@@ -23,25 +24,26 @@ Model::Model(Data* data,
 		std::string feature_name = data->getFeatureName(features[o]);
 		this->feature_names.push_back(feature_name);
 	}
-	this->v_levels = v_levels;
+	this->logger = logger;
 }
 
 Model::Model(Data* data,
 		size_t order,
+		size_t model_index,
 		std::vector<size_t> features,
 		std::vector<std::string> feature_names,
 		double alpha,
-		std::vector<std::ostream*> v_levels) : data(data), order(order), features(features), feature_names(feature_names), n(0), alpha(alpha), statistic(0), pvalue(0) {
+		Logger* logger) : data(data), order(order), model_index(model_index), features(features), feature_names(feature_names), n(0), alpha(alpha), statistic(0), pvalue(0) {
 	size_t idxs = pow(3, order);
 	for(size_t i = 0; i < idxs; ++i) {
 		this->in_cell.push_back(0);
 		this->out_cell.push_back(0);
-		this->cell_predictions.push_back(0);
+		this->cell_predictions.push_back(0.5);
 		this->cell_statistics.push_back(0);
 		this->cell_pvalues.push_back(0);
 		this->cell_labels.push_back(0);
 	}
-	this->v_levels = v_levels;
+	this->logger = logger;
 }
 
 Model::~Model() {
@@ -74,6 +76,9 @@ double Model::getModelPValue() const {
 }
 size_t Model::getOrder() const {
 	return this->order;
+}
+size_t Model::getModelIndex() const {
+	return this->model_index;
 }
 std::vector<size_t> Model::getFeatures() const {
 	return this->features;
@@ -120,7 +125,7 @@ std::vector<double> Model::predict() {
 	}
 
 	// Iterate through all samples in dataset
-	*v_levels[2] << "Iterating through samples..." << std::endl;
+	logger->log(Info, "Iterating through samples...", 3);
 	for(size_t i = 0; i < n_obs; ++i) {
 
 		// Get genotype combination
@@ -131,7 +136,11 @@ std::vector<double> Model::predict() {
 		// Convert genotype combination to index
 		int idx = std::inner_product(genotype.begin(), genotype.end(), bases.begin(), 0);
 
-		predictions[i] = cell_predictions[idx];
+		if(cell_labels[idx] == 0) {
+			predictions[i] = NA_REAL;
+		} else {
+			predictions[i] = cell_predictions[idx];
+		}
 
 	}
 

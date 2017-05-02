@@ -2,8 +2,10 @@
 #ifndef MODEL_H_
 #define MODEL_H_
 
+#include <Rcpp.h>
 #include "globals.h"
 #include "Data.h"
+#include "Logger.h"
 
 class Model {
 
@@ -13,15 +15,17 @@ public:
 	Model();
 	Model(Data* data,
 			size_t order,
+			size_t model_index,
 			std::vector<size_t> features,
 			double alpha,
-			std::vector<std::ostream*> v_levels);
+			Logger* logger);
 	Model(Data* data,
 			size_t order,
+			size_t model_index,
 			std::vector<size_t> features,
 			std::vector<std::string> feature_names,
 			double alpha,
-			std::vector<std::ostream*> v_levels);
+			Logger* logger);
 
 	// Destructor
 	virtual ~Model();
@@ -52,6 +56,7 @@ public:
 	double getModelStatistic() const;
 	double getModelPValue() const;
 	size_t getOrder() const;
+	size_t getModelIndex() const;
 	std::vector<size_t> getFeatures() const;
 	std::vector<std::string> getFeatureNames() const;
 	size_t getNumObservations() const;
@@ -64,6 +69,9 @@ protected:
 
 	// Interaction order
 	size_t order;
+
+	// Model index
+	size_t model_index;
 
 	// Features used in this feature model
 	std::vector<size_t> features;
@@ -109,7 +117,7 @@ protected:
 	virtual void calculateModelTestStatistic() = 0;
 
 	// Verbose streams
-	std::vector<std::ostream*> v_levels;
+	Logger* logger;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(Model);

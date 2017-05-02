@@ -12,7 +12,7 @@ max_models(0),
 num_models(0),
 feature_combination(0),
 predictions(0),
-v_levels(0) {
+logger(0) {
 	this->mode = 1;
 	this->models = std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers>();
 
@@ -25,7 +25,7 @@ Mbmdr::Mbmdr(Data* data,
 		size_t max_models,
 		size_t mode,
 		size_t num_threads,
-		std::vector<std::ostream*> v_levels) {
+		Logger* logger) {
 	this->mode = mode;
 	this->data = data;
 	this->order = order;
@@ -46,12 +46,12 @@ Mbmdr::Mbmdr(Data* data,
 		this->threads = num_threads;
 	}
 
-	this->v_levels = v_levels;
+	this->logger = logger;
 }
 
 Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 		size_t num_threads,
-		std::vector<std::ostream*> v_levels) {
+		Logger* logger) {
 	// Check if input is of correct type
 	try {
 		if(!saved_mbmdr.inherits("mbmdr")) {
@@ -64,9 +64,9 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 	try {
 		this->data = data;
 		this->n = data->getNumObservations();
-		this->predictions = std::vector<double>(n);
 		std::fill(this->predictions.begin(), this->predictions.end(), 0);
 		this->models = std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers>(CompareModelPointers(true));
+		this->logger = logger;
 	} catch (...) {
 		throw std::runtime_error("Initialization of MB-MDR object failed.");
 	}
@@ -79,6 +79,7 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 		this->max_models = saved_mbmdr["max_models"];
 
 		Rcpp::List models = saved_mbmdr["models"];
+		this->predictions = std::vector<double>(n*models.size());
 
 		for(int i = 0; i < models.size(); ++i) {
 			Rcpp::List rcpp_model = models[i];
@@ -100,16 +101,17 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 
 			if(mode == 1) {
 				// Create classification model
-				*v_levels[2] << "Creating classification model..." << std::endl;
+				logger->log(Info, "Creating classification model", 3);
 				model = new ModelClassification(data,
 						order,
+						i,
 						features,
 						feature_names,
 						alpha,
-						v_levels);
+						logger);
 			} else if(mode == 2) {
 				// Create regression model
-				*v_levels[2] << "Creating regression model..." << std::endl;
+				logger->log(Info, "Creating regression model", 3);
 			}
 
 			model->loadModel(in_cell, out_cell, cell_predictions, cell_statistics, cell_pvalues, cell_labels, statistic, pvalue);
@@ -134,7 +136,6 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
 		this->threads = num_threads;
 	}
 
-	this->v_levels = v_levels;
 }
 
 Mbmdr::~Mbmdr() {
@@ -147,23 +148,23 @@ Mbmdr::~Mbmdr() {
 
 void Mbmdr::possiblyAdd(Model* new_model) {
 
-	*v_levels[2] << "Comparing model statistics..." << std::endl;
+	logger->log(Info, "Comparing model statistics", 3);
 
 	// Get model statistic of new model
 	double new_model_statistic = new_model->getModelStatistic();
 
 	// Insert in queue if not full yet
-	*v_levels[2] << "Statistic of new model: " << new_model_statistic << std::endl;
+	logger->log(Info, "Statistic of new model: " + std::to_string(new_model_statistic), 3);
 	if(models.size() < max_models) {
-		*v_levels[2] << "Queue not full yet. Adding new model..." << std::endl;
+		logger->log(Info, "Queue not full yet. Adding new model.", 3);
 		models.push(new_model);
 	} else {
 		// Get model statistic of model with lowest statistic in queue
 		double top_model_statistic = models.top()->getModelStatistic();
-		*v_levels[2] << "Statistic of model at top position: " << top_model_statistic << std::endl;
+		logger->log(Info, "Statistic of model at top position: " + std::to_string(top_model_statistic), 3);
 		if(new_model_statistic > top_model_statistic) {
 			// get rid of the root, i.e. feature model with lowest statistic
-			*v_levels[2] << "Adding new model..." << std::endl;
+			logger->log(Info, "Adding new model", 3);
 			Model* model = models.top();
 			models.pop();
 			delete model;
@@ -172,7 +173,7 @@ void Mbmdr::possiblyAdd(Model* new_model) {
 			models.push(new_model);
 		} else {
 			// new model has lower statistic than all other models
-			*v_levels[2] << "Discarding new model..." << std::endl;
+			logger->log(Info, "Discarding new model", 3);
 			delete new_model;
 			return;
 		}
@@ -212,7 +213,6 @@ bool Mbmdr::getNextFeatureCombination(size_t j) {
 
 		// Restart iteration in current index
 		feature_combination[j] = feature_combination[j - 1] + 1;
-
 	}
 
 	return(true);
@@ -223,18 +223,18 @@ bool Mbmdr::getNextFeatureCombination(size_t j) {
 void Mbmdr::fit() {
 
 	// Create thread pool
-	*v_levels[1] << "Creating thread pool..." << std::endl;
+	logger->log(Config, "Creating thread pool", 2);
 	std::vector<std::thread> thread_pool;
 	thread_pool.reserve(threads);
 
 	// Add threads to thread pool
 	for(size_t t=0; t<threads; ++t) {
-		*v_levels[2] << "Adding thread..." << std::endl;
+		logger->log(Config, "Adding thread", 2);
 		thread_pool.push_back(std::thread(&Mbmdr::fitModelInThread, this));
 	}
 
 	// Wait for completion
-	*v_levels[1] << "Waiting for threads to complete..." << std::endl;
+	logger->log(Info, "Waiting for threads to complete", 1);
 	for(auto &thread : thread_pool) {
 		thread.join();
 	}
@@ -250,19 +250,21 @@ void Mbmdr::fitModelInThread() {
 
 		// Feed thread with next feature combination
 		std::unique_lock<std::mutex> lock(mutex);
+		size_t model_index;
 		if(getNextFeatureCombination(order-1)) {
 			feature_combination = this->feature_combination;
 
-			*v_levels[2] << "Calculating feature combination ";
+			std::string message = "Calculating feature combination ";
 			for(auto &col : feature_combination) {
-				*v_levels[2] << col << " ";
+				message += " " + std::to_string(col);
 			}
-			*v_levels[2] << "..." << std::endl;
+			logger->log(Info, message, 3);
 
 			// Increase model counter
 			++num_models;
+			model_index = num_models;
 		} else {
-			*v_levels[2] << "No further feature combinations available!" << std::endl;
+			logger->log(Info, "No further feature combinations available", 3);
 			break;
 		}
 		lock.unlock();
@@ -271,24 +273,25 @@ void Mbmdr::fitModelInThread() {
 
 		if(mode == 1) {
 			// Create classification model
-			*v_levels[2] << "Creating classification model..." << std::endl;
+			logger->log(Info, "Creating classification model", 3);
 			model = new ModelClassification(data,
 					order,
+					model_index,
 					feature_combination,
 					alpha,
-					v_levels);
+					logger);
 		} else if(mode == 2) {
 			// Create regression model
-			*v_levels[2] << "Creating regression model..." << std::endl;
+			logger->log(Info, "Creating regression model", 3);
 		}
 
 		// Fit the model
-		*v_levels[2] << "Model fit in progress..." << std::endl;
+		logger->log(Info, "Model fit in progress...", 3);
 		model->fit();
 
 		// (Possibly) save model
 		lock.lock();
-		*v_levels[2] << "Saving model..." << std::endl;
+		logger->log(Info, "Saving model", 3);
 		possiblyAdd(model);
 		lock.unlock();
 	}
@@ -339,24 +342,20 @@ Rcpp::List Mbmdr::exportModels() {
 std::vector<double> Mbmdr::predict() {
 
 	// Create thread pool
-	*v_levels[1] << "Creating thread pool..." << std::endl;
+	logger->log(Config, "Creating thread pool", 2);
 	std::vector<std::thread> thread_pool;
 	thread_pool.reserve(threads);
 
 	// Add threads to thread pool
 	for(size_t t=0; t<threads; ++t) {
-		*v_levels[2] << "Adding thread..." << std::endl;
+		logger->log(Config, "Adding thread", 2);
 		thread_pool.push_back(std::thread(&Mbmdr::predictInThread, this));
 	}
 
 	// Wait for completion
-	*v_levels[1] << "Waiting for threads to complete..." << std::endl;
+	logger->log(Info, "Waiting for threads to complete", 1);
 	for(auto &thread : thread_pool) {
 		thread.join();
-	}
-
-	for(uint i = 0; i < predictions.size(); ++i) {
-		predictions[i] /= num_models;
 	}
 
 	return predictions;
@@ -365,22 +364,28 @@ std::vector<double> Mbmdr::predict() {
 
 void Mbmdr::predictInThread() {
 
-	while(!models.empty()) {
+	while(true) {
 
 		// Feed thread with next model
 		std::unique_lock<std::mutex> lock(mutex);
-		Model* model = models.top();
-		models.pop();
+		Model* model;
+		if(models.empty()) {
+			break;
+		} else {
+			model = models.top();
+			models.pop();
+		}
 		lock.unlock();
 
 		// Predict sample outcomes in model
+		logger->log(Info, "Predicting...", 3);
 		std::vector<double> model_predictions = model->predict();
 
 		// Add predictions
 		lock.lock();
-		*v_levels[2] << "Saving predictions..." << std::endl;
-		for(size_t i = 0; i < predictions.size(); ++i) {
-			predictions[i] += model_predictions[i];
+		logger->log(Info, "Saving predictions", 3);
+		for(size_t i = 0; i < n; ++i) {
+			predictions[i+n*model->getModelIndex()] += model_predictions[i];
 		}
 		lock.unlock();
 		delete model;
@@ -403,6 +408,9 @@ double Mbmdr::getAlpha() {
 }
 size_t Mbmdr::getMaxModels() {
 	return this->max_models;
+}
+size_t Mbmdr::getNumModels() {
+	return this->num_models;
 }
 std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> Mbmdr::getModels() {
 	return this->models;

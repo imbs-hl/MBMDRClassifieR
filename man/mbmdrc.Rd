@@ -6,7 +6,7 @@
 \usage{
 mbmdrc(formula, data, order = 2, alpha = 0.1, max_results = 100,
   top_results = 10, folds, cv_loss, dependent_variable_name, num_threads,
-  verbose)
+  verbose, log_file)
 }
 \arguments{
 \item{formula}{[\code{formula}]\cr
@@ -48,11 +48,14 @@ should be used to find optimal \code{top_results}.}
 \item{num_threads}{[\code{int}]\cr
 Number of threads. Default is number of CPUs available.}
 
-\item{verbose}{[\code{int}]\cr
+\item{verbose}{[\code{int} or \code{string}]\cr
 Level of verbosity. Default is level 1 giving some basic
 information about progress. Level 0 will switch off any
-output. Levels 2 and 3 are for debugging purposes.
-Level 3 disables multithreading.}
+output. Levels 2 and 3 are for debugging purposes.}
+
+\item{log_file}{[\code{string}]\cr
+File path for a log file. If empty (default) logging is
+sent to console.}
 
 \item{dependent.variable.name}{[\code{string}]\cr
 Name of dependent variable, needed if no formula given.}

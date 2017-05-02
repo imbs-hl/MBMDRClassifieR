@@ -9,6 +9,7 @@
 #include "globals.h"
 #include "Model.h"
 #include "Data.h"
+#include "Logger.h"
 
 class Mbmdr {
 
@@ -22,11 +23,11 @@ public:
 			size_t max_models,
 			size_t mode,
 			size_t num_threads,
-			std::vector<std::ostream*> v_levels);
+			Logger* logger);
 	Mbmdr(Data* data,
 			Rcpp::List saved_mbmdr,
 			size_t num_threads,
-			std::vector<std::ostream*> v_levels);
+			Logger* logger);
 
 	// Destructor
 	virtual ~Mbmdr();
@@ -45,6 +46,7 @@ public:
 	size_t getN();
 	double getAlpha();
 	size_t getMaxModels();
+	size_t getNumModels();
 	std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> getModels();
 	std::unordered_set<std::string> getModelFeatureNames();
 
@@ -87,8 +89,8 @@ protected:
 	// Iterate through all possible feature combinations
 	bool getNextFeatureCombination(size_t j);
 
-	// Verbose streams
-	std::vector<std::ostream*> v_levels;
+	// Logging
+	Logger* logger;
 
 private:
 	void fitModelInThread();
