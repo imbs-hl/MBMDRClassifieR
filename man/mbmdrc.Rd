@@ -12,7 +12,7 @@ mbmdrc(formula, data, order = 2, alpha = 0.1, max_results = 100,
 \item{formula}{[\code{formula}]\cr
 A formula of the form LHS ~ RHS, where LHS is the disease
 status and RHS are the features to enter the MB-MDR
-genotype classification.}
+ genotype classification.}
 
 \item{data}{[\code{data.frame}]\cr
 The data object.}
@@ -45,10 +45,13 @@ should be used.}
 One of \code{auc} or \code{bac}, specifying which loss
 should be used to find optimal \code{top_results}.}
 
+\item{dependent_variable_name}{[\code{string}]\cr
+Name of dependent variable, needed if no formula given.}
+
 \item{num_threads}{[\code{int}]\cr
 Number of threads. Default is number of CPUs available.}
 
-\item{verbose}{[\code{int} or \code{string}]\cr
+\item{verbose}{[\code{int}]\cr
 Level of verbosity. Default is level 1 giving some basic
 information about progress. Level 0 will switch off any
 output. Levels 2 and 3 are for debugging purposes.}
@@ -56,9 +59,6 @@ output. Levels 2 and 3 are for debugging purposes.}
 \item{log_file}{[\code{string}]\cr
 File path for a log file. If empty (default) logging is
 sent to console.}
-
-\item{dependent.variable.name}{[\code{string}]\cr
-Name of dependent variable, needed if no formula given.}
 }
 \value{
 A S3 object of class \code{mbmdrc}.

@@ -13,7 +13,7 @@
 }
 \arguments{
 \item{object}{[\code{mbmdr}]\cr
-MB-MDR models and HLO tables as output from \code{\link{mbmdr}}.}
+MB-MDR models and HLO tables as output from \code{\link{mbmdrc}}.}
 
 \item{newdata}{[\code{newdata}]\cr
 New data to predict class status for.}
@@ -39,6 +39,9 @@ Default is \code{TRUE}.}
 Output predictions for all possible top results.
 Default is \code{FALSE}.}
 
+\item{num_threads}{[\code{int}]\cr
+Number of threads. Default is number of CPUs available.}
+
 \item{verbose}{[\code{int} or \code{string}]\cr
 Level of verbosity. Default is level 1 giving some basic
 information about progress. Level 0 will switch off any
@@ -46,7 +49,7 @@ output. Levels 2 and 3 are for debugging purposes.}
 
 \item{log_file}{[\code{string}]\cr
 File path for a log file. If empty (default) logging is
-   sent to console.}
+             sent to console.}
 
 \item{...}{Further arguments passed to or from other methods.}
 }
