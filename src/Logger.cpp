@@ -82,7 +82,7 @@ std::ostream& Logger::getOutputWriter() {
 	if (stream.is_open()) {
 		return stream;
 	} else {
-		return std::cout;
+		return Rcpp::Rcout;
 	}
 }
 
