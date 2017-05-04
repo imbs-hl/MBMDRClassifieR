@@ -10,7 +10,6 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     data.table,
-    mlr,
     stats,
     checkmate,
     Rcpp

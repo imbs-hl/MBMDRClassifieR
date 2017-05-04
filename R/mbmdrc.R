@@ -163,8 +163,8 @@ mbmdrc <- function(formula, data,
 
     # Select loss function
     measure <- switch(cv_loss,
-                      "auc" = mlr::measureAUC,
-                      "bac" = mlr::measureBAC)
+                      "auc" = auc,
+                      "bac" = bac)
 
     # Set search space for optimal top_results value
     if(length(top_results) == 1) {
