@@ -441,7 +441,3 @@ predict.mbmdrc <- function(object, newdata, type = "response", top_results, o_as
 range01 <- function(x, ...) {
   (x - min(x, ...)) / (max(x, ...) - min(x, ...))
 }
-
-.onUnload <- function (libpath) {
-  library.dynam.unload("MBMDRClassifieR", libpath)
-}
