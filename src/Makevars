@@ -4,4 +4,3 @@ PKG_CPPFLAGS = -DR_BUILD
 CC=ccache clang -Qunused-arguments
 CXX=ccache clang++ -Qunused-arguments
 CCACHE_CPP2=yes
-CXXFLAGS=-O3 -Wall -pipe -Wno-unused -pedantic
