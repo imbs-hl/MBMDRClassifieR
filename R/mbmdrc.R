@@ -42,6 +42,7 @@
 #' @param log_file					      [\code{string}]\cr
 #' 									              File path for a log file. If empty (default) logging is
 #' 									              sent to console.
+#' @param ...           Further arguments passed to or from other methods.
 #'
 #' @return A S3 object of class \code{mbmdrc}.
 #'
@@ -58,7 +59,7 @@ mbmdrc <- function(formula, data,
                    dependent_variable_name,
                    num_threads,
                    verbose,
-                   log_file) {
+                   log_file, ...) {
 
   # Input checks
   assertions <- checkmate::makeAssertCollection()
@@ -312,7 +313,7 @@ predict.mbmdr <- function(object, newdata, type = "response", model_type, top_re
   response <- factor(sample(0:1, nrow(newdata), TRUE))
   order <- object$order
   alpha <- object$alpha
-  max_results <- object$max_models
+  max_results <- object$num_models
   top_results <- min(object$num_models, top_results)
 
   # Prepare data ----
@@ -399,6 +400,8 @@ predict.mbmdrc <- function(object, newdata, type = "response", top_results, o_as
     checkmate::assertInt(top_results, lower = 1, upper = object$mbmdr$num_models,
                          add = assertions)
     top_results <- min(object$mbmdr$num_models, top_results)
+  } else {
+    top_results <- object$top_results
   }
   if(!missing(o_as_na)) {
     checkmate::assertFlag(o_as_na, add = assertions)

@@ -6,7 +6,7 @@
 \usage{
 mbmdrc(formula, data, order = 2, alpha = 0.1, max_results = 100,
   top_results = 10, folds, cv_loss, dependent_variable_name, num_threads,
-  verbose, log_file)
+  verbose, log_file, ...)
 }
 \arguments{
 \item{formula}{[\code{formula}]\cr
@@ -59,6 +59,8 @@ output. Levels 2 and 3 are for debugging purposes.}
 \item{log_file}{[\code{string}]\cr
 File path for a log file. If empty (default) logging is
 sent to console.}
+
+\item{...}{Further arguments passed to or from other methods.}
 }
 \value{
 A S3 object of class \code{mbmdrc}.
