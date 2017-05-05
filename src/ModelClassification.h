@@ -14,6 +14,7 @@ public:
                       size_t order,
                       size_t model_index,
                       std::vector<size_t> features,
+                      size_t min_cell_size,
                       double alpha,
                       Logger* logger);
   ModelClassification(Data* data,
@@ -21,6 +22,7 @@ public:
                       size_t model_index,
                       std::vector<size_t> features,
                       std::vector<std::string> feature_names,
+                      size_t min_cell_size,
                       double alpha,
                       Logger* logger);
 

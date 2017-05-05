@@ -8,7 +8,7 @@
 // [[Rcpp::export]]
 Rcpp::List mbmdrCpp(size_t model_type,
                     Rcpp::IntegerMatrix& input_data, Rcpp::NumericVector& response,
-                    size_t order, double alpha,
+                    size_t order, size_t min_cell_size, double alpha,
                     size_t max_results,
                     size_t num_threads,
                     size_t verbose,
@@ -45,6 +45,7 @@ Rcpp::List mbmdrCpp(size_t model_type,
       logger->log(Info, "Creating new MB-MDR", 1);
       mbmdr = new Mbmdr(data,
                         order,
+                        min_cell_size,
                         alpha,
                         max_results,
                         model_type,
@@ -59,6 +60,7 @@ Rcpp::List mbmdrCpp(size_t model_type,
       logger->log(Info, "Exporting", 3);
       Rcpp::List mbmdr_object;
       mbmdr_object.push_back(mbmdr->exportModels(), "models");
+      mbmdr_object.push_back(mbmdr->getMinCellSize(), "min_cell_size");
       mbmdr_object.push_back(mbmdr->getAlpha(), "alpha");
       mbmdr_object.push_back(mbmdr->getMaxModels(), "max_models");
       mbmdr_object.push_back(mbmdr->getNumModels(), "num_models");

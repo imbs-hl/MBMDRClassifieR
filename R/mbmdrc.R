@@ -4,14 +4,18 @@
 #' Use the MB-MDR HLO classification of top models to predict the disease risk.
 #'
 #' @param formula       		    	[\code{formula}]\cr
-#'                      		    	A formula of the form LHS ~ RHS, where LHS is the disease
-#'                      			    status and RHS are the features to enter the MB-MDR
+#'                      		    	A formula of the form LHS ~ RHS, where LHS is the dependent
+#'                      		    	variable and RHS are the features to enter the MB-MDR
 #'                      		     	genotype classification.
 #' @param data          			    [\code{data.frame}]\cr
 #'                      			    The data object.
 #' @param order         			    [\code{int}]\cr
 #'                      			    Single integer specifying the interaction depth used
 #'                      			    in the MB-MDR algorithm.
+#' @param min_cell_size           [\code{int}]\cr
+#'                                Single integer specifying the minimum number of
+#'                                observation in a genotype combination to be statistically
+#'                                relevant.
 #' @param alpha         			    [\code{double}]\cr
 #'                      			    Single numeric as significance level used during HLO
 #'                      			    classification of genotype combinations.
@@ -42,9 +46,12 @@
 #' @param log_file					      [\code{string}]\cr
 #' 									              File path for a log file. If empty (default) logging is
 #' 									              sent to console.
-#' @param ...           Further arguments passed to or from other methods.
+#' @param ...                     Further arguments passed to or from other methods.
 #'
 #' @return A S3 object of class \code{mbmdrc}.
+#'
+#' @details If the data type of the dependent variable is a factor, classification mode is started automatically. Otherwise MB-MDR will run in regression mode.
+#' In classification mode, the first factor level is assumed to code for the negative class.
 #'
 #' @export
 #' @import data.table
@@ -52,6 +59,7 @@
 #' @importFrom Rcpp sourceCpp
 mbmdrc <- function(formula, data,
                    order = 2,
+                   min_cell_size = 10,
                    alpha = 0.1,
                    max_results = 100,
                    top_results = 10,
@@ -66,7 +74,9 @@ mbmdrc <- function(formula, data,
 
   checkmate::assertDataFrame(data, min.cols = 2, min.rows = 2,
                              add = assertions)
-  checkmate::assertInt(order, lower = 2, upper = 5,
+  checkmate::assertInt(order, lower = 1, upper = 5,
+                       add = assertions)
+  checkmate::assertInt(min_cell_size, lower = 0,
                        add = assertions)
   checkmate::assertNumber(alpha, lower = 0, upper = 1,
                           add = assertions)
@@ -180,7 +190,7 @@ mbmdrc <- function(formula, data,
       data_cv_train <- data_final[fold_idx != f,]
       response_cv_train <- response[fold_idx != f]
       mbmdr <- mbmdrCpp(model_type = model_type, input_data = data_cv_train, response = response_cv_train,
-                        order = order, alpha = alpha,
+                        order = order, min_cell_size = min_cell_size, alpha = alpha,
                         max_results = max_results,
                         num_threads = num_threads,
                         verbose = verbose,
@@ -222,7 +232,7 @@ mbmdrc <- function(formula, data,
   # Call C++ ----
   result <- c(result, mbmdrCpp(model_type = model_type,
                                input_data = data_final, response = response,
-                               order = order, alpha = alpha,
+                               order = order, min_cell_size = min_cell_size, alpha = alpha,
                                max_results = max_results,
                                num_threads = num_threads,
                                verbose = verbose,
@@ -235,6 +245,9 @@ mbmdrc <- function(formula, data,
   result$num_combinations <- choose(ncol(data_final), order)
   result$model_type <- model_type
   result$top_results <- top_results
+  if (is.factor(response)) {
+    result$levels <- levels(droplevels(response))
+  }
 
   class(result) <- "mbmdrc"
 
@@ -312,8 +325,9 @@ predict.mbmdr <- function(object, newdata, type = "response", model_type, top_re
   # Extract information ----
   response <- factor(sample(0:1, nrow(newdata), TRUE))
   order <- object$order
+  min_cell_size <- object$min_cell_size
   alpha <- object$alpha
-  max_results <- object$num_models
+  max_results <- min(object$num_models, object$max_models)
   top_results <- min(object$num_models, top_results)
 
   # Prepare data ----
@@ -322,7 +336,7 @@ predict.mbmdr <- function(object, newdata, type = "response", model_type, top_re
   # Call C++ ----
   predictions <- data.table::as.data.table(mbmdrCpp(model_type = model_type,
                                                     input_data = data_final, response = response,
-                                                    order = order, alpha = alpha,
+                                                    order = order, min_cell_size = min_cell_size, alpha = alpha,
                                                     max_results = max_results,
                                                     num_threads = num_threads,
                                                     verbose = verbose,
@@ -411,6 +425,9 @@ predict.mbmdrc <- function(object, newdata, type = "response", top_results, o_as
   if(!missing(num_threads)) {
     checkmate::assertInt(num_threads, lower = 0,
                          add = assertions)
+  } else {
+    # Determine number of CPUs within C++
+    num_threads <- 0
   }
   if(missing(verbose)) {
     verbose <- 1
@@ -429,12 +446,19 @@ predict.mbmdrc <- function(object, newdata, type = "response", top_results, o_as
 
   model_type <- object$model_type
 
-  stats::predict(object$mbmdr, newdata = newdata,
+  predictions <- stats::predict(object$mbmdr, newdata = newdata,
                  model_type = model_type, type = type,
                  top_results = top_results,
                  o_as_na = o_as_na,
                  num_threads = num_threads,
                  verbose = verbose, log_file = log_file, ...)
+
+  if(type %in% c("prob", "scoreprob")) {
+    predictions <- cbind(1-predictions, predictions)
+    colnames(predictions) <- object$levels
+  }
+
+  return(predictions)
 
 }
 

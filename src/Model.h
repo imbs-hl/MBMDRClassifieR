@@ -17,6 +17,7 @@ public:
         size_t order,
         size_t model_index,
         std::vector<size_t> features,
+        size_t min_cell_size,
         double alpha,
         Logger* logger);
   Model(Data* data,
@@ -24,6 +25,7 @@ public:
         size_t model_index,
         std::vector<size_t> features,
         std::vector<std::string> feature_names,
+        size_t min_cell_size,
         double alpha,
         Logger* logger);
 
@@ -60,6 +62,7 @@ public:
   std::vector<size_t> getFeatures() const;
   std::vector<std::string> getFeatureNames() const;
   size_t getNumObservations() const;
+  size_t getMinCellSize() const;
   double getAlpha() const;
 
 protected:
@@ -79,6 +82,9 @@ protected:
 
   // Total observations
   size_t n;
+
+  // Minimum sample size in a cell to be relevant
+  size_t min_cell_size;
 
   // Significance threshold for cell labels
   double alpha;

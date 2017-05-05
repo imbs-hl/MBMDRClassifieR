@@ -7,6 +7,7 @@ Mbmdr::Mbmdr() :
   data(0),
   order(0),
   n(0),
+  min_cell_size(0),
   alpha(0),
   max_models(0),
   num_models(0),
@@ -21,6 +22,7 @@ Mbmdr::Mbmdr() :
 
 Mbmdr::Mbmdr(Data* data,
              size_t order,
+             size_t min_cell_size,
              double alpha,
              size_t max_models,
              size_t mode,
@@ -29,6 +31,7 @@ Mbmdr::Mbmdr(Data* data,
   this->mode = mode;
   this->data = data;
   this->order = order;
+  this->min_cell_size = min_cell_size;
   this->alpha = alpha;
   this->max_models = max_models;
   this->num_models = 0;
@@ -75,6 +78,7 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
   try {
     this->mode = saved_mbmdr["mode"];
     this->order = saved_mbmdr["order"];
+    this->min_cell_size = saved_mbmdr["min_cell_size"];
     this->alpha = saved_mbmdr["alpha"];
     this->max_models = saved_mbmdr["max_models"];
 
@@ -107,6 +111,7 @@ Mbmdr::Mbmdr(Data* data, Rcpp::List saved_mbmdr,
                                         i,
                                         features,
                                         feature_names,
+                                        min_cell_size,
                                         alpha,
                                         logger);
       } else if(mode == 2) {
@@ -278,6 +283,7 @@ void Mbmdr::fitModelInThread() {
                                       order,
                                       model_index,
                                       feature_combination,
+                                      min_cell_size,
                                       alpha,
                                       logger);
     } else if(mode == 2) {
@@ -321,6 +327,7 @@ Rcpp::List Mbmdr::exportModels() {
     export_model_object.push_back(model->getModelStatistic(), "statistic");
     export_model_object.push_back(model->getModelPValue(), "pvalue");
     export_model_object.push_back(model->getOrder(), "order");
+    export_model_object.push_back(model->getMinCellSize(), "min_cell_size");
     export_model_object.push_back(model->getAlpha(), "alpha");
 
     // Append model export object to list of models
@@ -394,27 +401,30 @@ void Mbmdr::predictInThread() {
 }
 
 // Getters
-uint Mbmdr::getMode() {
+uint Mbmdr::getMode() const {
   return this->mode;
 }
-size_t Mbmdr::getOrder() {
+size_t Mbmdr::getOrder() const {
   return this->order;
 }
-size_t Mbmdr::getN() {
+size_t Mbmdr::getN() const {
   return this->n;
 }
-double Mbmdr::getAlpha() {
+size_t Mbmdr::getMinCellSize() const {
+  return this->min_cell_size;
+}
+double Mbmdr::getAlpha() const {
   return this->alpha;
 }
-size_t Mbmdr::getMaxModels() {
+size_t Mbmdr::getMaxModels() const {
   return this->max_models;
 }
-size_t Mbmdr::getNumModels() {
+size_t Mbmdr::getNumModels() const {
   return this->num_models;
 }
-std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> Mbmdr::getModels() {
+std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> Mbmdr::getModels() const {
   return this->models;
 }
-std::unordered_set<std::string> Mbmdr::getModelFeatureNames() {
+std::unordered_set<std::string> Mbmdr::getModelFeatureNames() const {
   return this->model_feature_names;
 }

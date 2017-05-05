@@ -2,15 +2,16 @@
 #include <math.h>
 #include "Model.h"
 
-Model::Model() : data(0), order(0), model_index(0), features(0), feature_names(0), n(0), alpha(0), in_cell(0), out_cell(0), cell_predictions(0), cell_statistics(0), cell_pvalues(0), cell_labels(0), statistic(0), pvalue(0), logger(0) {
+Model::Model() : data(0), order(0), model_index(0), features(0), feature_names(0), n(0), min_cell_size(0), alpha(0), in_cell(0), out_cell(0), cell_predictions(0), cell_statistics(0), cell_pvalues(0), cell_labels(0), statistic(0), pvalue(0), logger(0) {
 }
 
 Model::Model(Data* data,
              size_t order,
              size_t model_index,
              std::vector<size_t> features,
+             size_t min_cell_size,
              double alpha,
-             Logger* logger) : data(data), order(order), model_index(model_index), features(features), n(0), alpha(alpha), statistic(0), pvalue(0) {
+             Logger* logger) : data(data), order(order), model_index(model_index), features(features), n(0), min_cell_size(min_cell_size), alpha(alpha), statistic(0), pvalue(0) {
   size_t idxs = pow(3, order);
   for(size_t i = 0; i < idxs; ++i) {
     this->in_cell.push_back(0);
@@ -32,8 +33,9 @@ Model::Model(Data* data,
              size_t model_index,
              std::vector<size_t> features,
              std::vector<std::string> feature_names,
+             size_t min_cell_size,
              double alpha,
-             Logger* logger) : data(data), order(order), model_index(model_index), features(features), feature_names(feature_names), n(0), alpha(alpha), statistic(0), pvalue(0) {
+             Logger* logger) : data(data), order(order), model_index(model_index), features(features), feature_names(feature_names), n(0), min_cell_size(min_cell_size), alpha(alpha), statistic(0), pvalue(0) {
   size_t idxs = pow(3, order);
   for(size_t i = 0; i < idxs; ++i) {
     this->in_cell.push_back(0);
@@ -88,6 +90,9 @@ std::vector<std::string> Model::getFeatureNames() const {
 }
 size_t Model::getNumObservations() const {
   return this->n;
+}
+size_t Model::getMinCellSize() const {
+  return this->min_cell_size;
 }
 double Model::getAlpha() const {
   return this->alpha;

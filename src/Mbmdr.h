@@ -19,6 +19,7 @@ public:
   Mbmdr();
   Mbmdr(Data* data,
         size_t order,
+        size_t min_cell_size,
         double alpha,
         size_t max_models,
         size_t mode,
@@ -41,14 +42,15 @@ public:
   Rcpp::List exportModels();
 
   // Getters
-  uint getMode();
-  size_t getOrder();
-  size_t getN();
-  double getAlpha();
-  size_t getMaxModels();
-  size_t getNumModels();
-  std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> getModels();
-  std::unordered_set<std::string> getModelFeatureNames();
+  uint getMode() const;
+  size_t getOrder() const;
+  size_t getN() const;
+  size_t getMinCellSize() const;
+  double getAlpha() const;
+  size_t getMaxModels() const;
+  size_t getNumModels() const;
+  std::priority_queue<Model*, std::vector<Model*>, CompareModelPointers> getModels() const;
+  std::unordered_set<std::string> getModelFeatureNames() const;
 
 protected:
 
@@ -63,6 +65,9 @@ protected:
 
   // Total observations
   size_t n;
+
+  // Minimum samples in cell to be relevant
+  size_t min_cell_size;
 
   // Significance threshold for cell labels
   double alpha;

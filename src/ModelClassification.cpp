@@ -11,9 +11,10 @@ ModelClassification::ModelClassification(Data* data,
                                          size_t order,
                                          size_t model_index,
                                          std::vector<size_t> features,
+                                         size_t min_cell_size,
                                          double alpha,
                                          Logger* logger) :
-  Model(data, order, model_index, features, alpha, logger),
+  Model(data, order, model_index, features, min_cell_size, alpha, logger),
   mu(0) {
   size_t idxs = pow(3, order);
   for(size_t i = 0; i < idxs; ++i) {
@@ -29,9 +30,10 @@ ModelClassification::ModelClassification(Data* data,
                                          size_t model_index,
                                          std::vector<size_t> features,
                                          std::vector<std::string> feature_names,
+                                         size_t min_cell_size,
                                          double alpha,
                                          Logger* logger) :
-  Model(data, order, model_index, features, feature_names, alpha, logger),
+  Model(data, order, model_index, features, feature_names, min_cell_size, alpha, logger),
   mu(0) {
   size_t idxs = pow(3, order);
   for(size_t i = 0; i < idxs; ++i) {
@@ -118,33 +120,42 @@ void ModelClassification::classifyCells() {
     // Number of observations not in cell
     out_cell[i] = n - in_cell[i];
 
-    // Proportion of cases in cell
-    case_prob_in_cell[i] = (double)cases[i] / (double)in_cell[i];
-    cell_predictions[i] = case_prob_in_cell[i];
-
-    // Proportion of cases not in cell
-    case_prob_out_cell[i] = (double)(sum_of_cases - cases[i]) / (double)out_cell[i];
-
-    // Calculate cell statistic
-    cell_statistics[i] = 1 / (mu*(1-mu)) *
-      (in_cell[i] * pow(case_prob_in_cell[i] - mu, 2) +
-      out_cell[i] * pow(case_prob_out_cell[i] - mu, 2));
-
-    // Calculate cell P value
-    cell_pvalues[i] = 1 - std::erf(std::sqrt(cell_statistics[i] / 2)); // For one degree of freedom the CDF of the chi square distribution is just the error function
-
-    // Determine cell label
-    if(cell_pvalues[i] < alpha) {
-      if(case_prob_in_cell[i] > case_prob_out_cell[i]) {
-        // Classify as H
-        cell_labels[i] = 1;
-      } else {
-        // Classify as L
-        cell_labels[i] = -1;
-      }
-    } else {
-      // Classify as O
+    // Check if enough samples are in the cell
+    if(in_cell[i] < min_cell_size) {
+      // Too few samples in cell
+      cell_predictions[i] = 0.5;
+      cell_statistics[i] = 0;
+      cell_pvalues[i] = 1;
       cell_labels[i] = 0;
+    } else {
+      // Proportion of cases in cell
+      case_prob_in_cell[i] = (double)cases[i] / (double)in_cell[i];
+      cell_predictions[i] = case_prob_in_cell[i];
+
+      // Proportion of cases not in cell
+      case_prob_out_cell[i] = (double)(sum_of_cases - cases[i]) / (double)out_cell[i];
+
+      // Calculate cell statistic
+      cell_statistics[i] = 1 / (mu*(1-mu)) *
+        (in_cell[i] * pow(case_prob_in_cell[i] - mu, 2) +
+        out_cell[i] * pow(case_prob_out_cell[i] - mu, 2));
+
+      // Calculate cell P value
+      cell_pvalues[i] = 1 - std::erf(std::sqrt(cell_statistics[i] / 2)); // For one degree of freedom the CDF of the chi square distribution is just the error function
+
+      // Determine cell label
+      if(cell_pvalues[i] < alpha) {
+        if(case_prob_in_cell[i] > case_prob_out_cell[i]) {
+          // Classify as H
+          cell_labels[i] = 1;
+        } else {
+          // Classify as L
+          cell_labels[i] = -1;
+        }
+      } else {
+        // Classify as O
+        cell_labels[i] = 0;
+      }
     }
   }
 }

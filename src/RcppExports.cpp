@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // mbmdrCpp
-Rcpp::List mbmdrCpp(size_t model_type, Rcpp::IntegerMatrix& input_data, Rcpp::NumericVector& response, size_t order, double alpha, size_t max_results, size_t num_threads, size_t verbose, std::string log_file, Rcpp::List saved_mbmdr);
-RcppExport SEXP MBMDRClassifieR_mbmdrCpp(SEXP model_typeSEXP, SEXP input_dataSEXP, SEXP responseSEXP, SEXP orderSEXP, SEXP alphaSEXP, SEXP max_resultsSEXP, SEXP num_threadsSEXP, SEXP verboseSEXP, SEXP log_fileSEXP, SEXP saved_mbmdrSEXP) {
+Rcpp::List mbmdrCpp(size_t model_type, Rcpp::IntegerMatrix& input_data, Rcpp::NumericVector& response, size_t order, size_t min_cell_size, double alpha, size_t max_results, size_t num_threads, size_t verbose, std::string log_file, Rcpp::List saved_mbmdr);
+RcppExport SEXP MBMDRClassifieR_mbmdrCpp(SEXP model_typeSEXP, SEXP input_dataSEXP, SEXP responseSEXP, SEXP orderSEXP, SEXP min_cell_sizeSEXP, SEXP alphaSEXP, SEXP max_resultsSEXP, SEXP num_threadsSEXP, SEXP verboseSEXP, SEXP log_fileSEXP, SEXP saved_mbmdrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -15,13 +15,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type input_data(input_dataSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector& >::type response(responseSEXP);
     Rcpp::traits::input_parameter< size_t >::type order(orderSEXP);
+    Rcpp::traits::input_parameter< size_t >::type min_cell_size(min_cell_sizeSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< size_t >::type max_results(max_resultsSEXP);
     Rcpp::traits::input_parameter< size_t >::type num_threads(num_threadsSEXP);
     Rcpp::traits::input_parameter< size_t >::type verbose(verboseSEXP);
     Rcpp::traits::input_parameter< std::string >::type log_file(log_fileSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type saved_mbmdr(saved_mbmdrSEXP);
-    rcpp_result_gen = Rcpp::wrap(mbmdrCpp(model_type, input_data, response, order, alpha, max_results, num_threads, verbose, log_file, saved_mbmdr));
+    rcpp_result_gen = Rcpp::wrap(mbmdrCpp(model_type, input_data, response, order, min_cell_size, alpha, max_results, num_threads, verbose, log_file, saved_mbmdr));
     return rcpp_result_gen;
 END_RCPP
 }
