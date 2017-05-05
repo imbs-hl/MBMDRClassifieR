@@ -4,14 +4,14 @@
 \alias{mbmdrc}
 \title{MB-MDR based classifier}
 \usage{
-mbmdrc(formula, data, order = 2, alpha = 0.1, max_results = 100,
-  top_results = 10, folds, cv_loss, dependent_variable_name, num_threads,
-  verbose, log_file, ...)
+mbmdrc(formula, data, order = 2, min_cell_size = 10, alpha = 0.1,
+  max_results = 100, top_results = 10, folds, cv_loss,
+  dependent_variable_name, num_threads, verbose, log_file, ...)
 }
 \arguments{
 \item{formula}{[\code{formula}]\cr
-A formula of the form LHS ~ RHS, where LHS is the disease
-status and RHS are the features to enter the MB-MDR
+A formula of the form LHS ~ RHS, where LHS is the dependent
+variable and RHS are the features to enter the MB-MDR
  genotype classification.}
 
 \item{data}{[\code{data.frame}]\cr
@@ -20,6 +20,11 @@ The data object.}
 \item{order}{[\code{int}]\cr
 Single integer specifying the interaction depth used
 in the MB-MDR algorithm.}
+
+\item{min_cell_size}{[\code{int}]\cr
+Single integer specifying the minimum number of
+observation in a genotype combination to be statistically
+relevant.}
 
 \item{alpha}{[\code{double}]\cr
 Single numeric as significance level used during HLO
@@ -68,4 +73,7 @@ A S3 object of class \code{mbmdrc}.
 \description{
 Use the MB-MDR HLO classification of top models to predict the disease risk.
 }
-
+\details{
+If the data type of the dependent variable is a factor, classification mode is started automatically. Otherwise MB-MDR will run in regression mode.
+In classification mode, the first factor level is assumed to code for the negative class.
+}

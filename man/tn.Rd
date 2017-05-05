@@ -22,4 +22,3 @@ The number of true negatives as single \code{numeric}.
 \description{
 Computes the number of true negatives
 }
-

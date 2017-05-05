@@ -26,4 +26,3 @@ The Area under the Receiver Operating Curve as single \code{numeric}.
 \description{
 Computes the Area under the Receiver Operating Curve.
 }
-

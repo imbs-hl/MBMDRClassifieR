@@ -25,4 +25,3 @@ The balanced accuracy as single \code{numeric}.
 \description{
 Computes the balanced accuracy.
 }
-

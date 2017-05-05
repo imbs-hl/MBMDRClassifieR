@@ -74,4 +74,3 @@ been just too few observations in the training data so that \code{NA} might
 be more reasonable as contribution to \code{response} and \code{prob} type
 predictions.
 }
-
