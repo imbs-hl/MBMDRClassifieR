@@ -158,6 +158,7 @@ mbmdrc <- function(formula, data,
 
   # Initialize output ----
   result <- list()
+  saved_mbmdr <- list()
 
   # Internal cross validation ----
   if(!missing(folds) & !missing(cv_loss)) {
@@ -182,7 +183,6 @@ mbmdrc <- function(formula, data,
     }
 
     fold_idx <- sample(1:folds, nrow(data_final), replace = TRUE)
-    saved_mbmdr <- list()
 
     # Calculate the MB-MDR for each fold and assess current top_results value
     cv_performance <- rbindlist(lapply(1:folds, function(f) {
