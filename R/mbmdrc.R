@@ -22,12 +22,11 @@
 #' @param max_results   			    [\code{int}]\cr
 #'                      			    Single integer specifying the number of top models to
 #'                      			    report.
-#' @param top_results   			    [\code{int} or \code{integer}]\cr
+#' @param top_results   			    [\code{int}]\cr
 #'                      			    Single integer specifying how many models shall be used
 #'                      			    for prediction. If \code{folds} and \code{cv.loss} are
 #'                      			    set, this value specifies the upper limit of top results
-#'                      			    to assess in CV, or, if a \code{integer} vector the top
-#'                      			    result values to assess in CV.
+#'                      			    to assess in CV.
 #' @param folds         			    [\code{int}]\cr
 #'                      			    Single interger specifying how many folds for internal
 #'                      			    cross validation to find optimal \code{top_results}
@@ -105,6 +104,9 @@ mbmdrc <- function(formula, data,
     checkmate::assertInt(num_threads, lower = 1,
                          add = assertions)
   }
+  # TODO
+  # There is a bug in the multithreading
+  num_threads <- 1
 
   # Formula interface ----
   if(missing(formula)) {
@@ -159,6 +161,10 @@ mbmdrc <- function(formula, data,
   # Initialize output ----
   result <- list()
   saved_mbmdr <- list()
+
+  # Data dependent max_results and top_results
+  max_results <- min(choose(ncol(data_final), 2), max_results)
+  top_results <- min(max_results, top_results)
 
   # Internal cross validation ----
   if(!missing(folds) & !missing(cv_loss)) {
@@ -429,6 +435,9 @@ predict.mbmdrc <- function(object, newdata, type = "response", top_results, o_as
     # Determine number of CPUs within C++
     num_threads <- 0
   }
+  # TODO
+  # There is a bug in the multithreading
+  num_threads <- 1
   if(missing(verbose)) {
     verbose <- 1
   } else {

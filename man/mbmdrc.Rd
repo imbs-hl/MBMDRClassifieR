@@ -34,12 +34,11 @@ classification of genotype combinations.}
 Single integer specifying the number of top models to
 report.}
 
-\item{top_results}{[\code{int} or \code{integer}]\cr
+\item{top_results}{[\code{int}]\cr
 Single integer specifying how many models shall be used
 for prediction. If \code{folds} and \code{cv.loss} are
 set, this value specifies the upper limit of top results
-to assess in CV, or, if a \code{integer} vector the top
-result values to assess in CV.}
+to assess in CV.}
 
 \item{folds}{[\code{int}]\cr
 Single interger specifying how many folds for internal
