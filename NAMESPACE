@@ -3,5 +3,3 @@
 S3method(predict,mbmdrc)
 export(mbmdrc)
 import(data.table)
-importFrom(Rcpp,sourceCpp)
-useDynLib(MBMDRClassifieR)
