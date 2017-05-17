@@ -5,11 +5,11 @@
 \alias{predict.mbmdrc}
 \title{MB-MDR classifier prediction}
 \usage{
-\method{predict}{mbmdr}(object, newdata, type = "response", model_type,
-  top_results, o_as_na, all, num_threads, verbose, log_file, ...)
+\method{predict}{mbmdr}(object, newdata, type = "response", top_results,
+  all = FALSE, o_as_na = TRUE, ...)
 
 \method{predict}{mbmdrc}(object, newdata, type = "response", top_results,
-  o_as_na, num_threads, verbose, log_file, ...)
+  o_as_na = TRUE, ...)
 }
 \arguments{
 \item{object}{[\code{mbmdr}]\cr
@@ -23,33 +23,14 @@ Type of prediction. One of \code{response}, \code{prob},
 \code{score} or \code{scoreprob}. See details.
 Default is \code{response}.}
 
-\item{model_type}{[\code{int}]\cr
-Code for type of MB-MDR models. 1 is for classification,
-2 is for regression.}
-
 \item{top_results}{[\code{int}]\cr
 How many models are used for prediction.}
 
-\item{o_as_na}{[\code{bool}]\cr
-Indicates how to handle samples in O classified genotype
-combinations. See details.
-Default is \code{TRUE}.}
-
 \item{all}{[\code{bool}]\cr
-Output predictions for all possible top results.
-Default is \code{FALSE}.}
+Output predictions for all possible top results.}
 
-\item{num_threads}{[\code{int}]\cr
-Number of threads. Default is number of CPUs available.}
-
-\item{verbose}{[\code{int} or \code{string}]\cr
-Level of verbosity. Default is level 1 giving some basic
-information about progress. Level 0 will switch off any
-output. Levels 2 and 3 are for debugging purposes.}
-
-\item{log_file}{[\code{string}]\cr
-File path for a log file. If empty (default) logging is
-             sent to console.}
+\item{o_as_na}{[\code{bool}]\cr
+Encode non informative cells with NA or with 0.5.}
 
 \item{...}{Further arguments passed to or from other methods.}
 }

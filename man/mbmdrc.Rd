@@ -5,8 +5,8 @@
 \title{MB-MDR based classifier}
 \usage{
 mbmdrc(formula, data, order = 2, min_cell_size = 10, alpha = 0.1,
-  max_results = 100, top_results = 10, folds, cv_loss,
-  dependent_variable_name, num_threads, verbose, log_file, ...)
+  adjustment = "NONE", max_results = 1000, top_results = 1000, folds,
+  cv_loss, dependent_variable_name, verbose, ...)
 }
 \arguments{
 \item{formula}{[\code{formula}]\cr
@@ -17,9 +17,10 @@ variable and RHS are the features to enter the MB-MDR
 \item{data}{[\code{data.frame}]\cr
 The data object.}
 
-\item{order}{[\code{int}]\cr
+\item{order}{[\code{int} or \code{integer}]\cr
 Single integer specifying the interaction depth used
-in the MB-MDR algorithm.}
+in the MB-MDR algorithm. Possible options are
+1 and 2.}
 
 \item{min_cell_size}{[\code{int}]\cr
 Single integer specifying the minimum number of
@@ -28,7 +29,11 @@ relevant.}
 
 \item{alpha}{[\code{double}]\cr
 Single numeric as significance level used during HLO
-classification of genotype combinations.}
+classification of genotype combinations.#'}
+
+\item{adjustment}{[\code{string}]\cr
+Adjust method to be used.
+"CODOMINANT", "ADDITIVE" or "NONE" (default).}
 
 \item{max_results}{[\code{int}]\cr
 Single integer specifying the number of top models to
@@ -52,19 +57,16 @@ should be used to find optimal \code{top_results}.}
 \item{dependent_variable_name}{[\code{string}]\cr
 Name of dependent variable, needed if no formula given.}
 
-\item{num_threads}{[\code{int}]\cr
-Number of threads. Default is number of CPUs available.}
-
 \item{verbose}{[\code{int}]\cr
 Level of verbosity. Default is level 1 giving some basic
 information about progress. Level 0 will switch off any
 output. Levels 2 and 3 are for debugging purposes.}
 
+\item{...}{Further arguments passed to or from other methods.}
+
 \item{log_file}{[\code{string}]\cr
 File path for a log file. If empty (default) logging is
 sent to console.}
-
-\item{...}{Further arguments passed to or from other methods.}
 }
 \value{
 A S3 object of class \code{mbmdrc}.
