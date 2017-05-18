@@ -38,15 +38,14 @@
 #' @param cv_loss       			    [\code{character}]\cr
 #'                      			    One of \code{auc} or \code{bac}, specifying which loss
 #'                      			    should be used to find optimal \code{top_results}.
+#' @param o_as_na                 [\code{bool}]\cr
+#'                                Encode non informative cells with NA or with 0.5.
 #' @param dependent_variable_name [\code{string}]\cr
 #' 									              Name of dependent variable, needed if no formula given.
 #' @param verbose                 [\code{int}]\cr
 #' 									              Level of verbosity. Default is level 1 giving some basic
 #' 									              information about progress. Level 0 will switch off any
 #' 									              output. Levels 2 and 3 are for debugging purposes.
-#' @param log_file					      [\code{string}]\cr
-#' 									              File path for a log file. If empty (default) logging is
-#' 									              sent to console.
 #' @param ...                     Further arguments passed to or from other methods.
 #'
 #' @return A S3 object of class \code{mbmdrc}.
@@ -63,7 +62,7 @@ mbmdrc <- function(formula, data,
                    adjustment = "NONE",
                    max_results = 1000,
                    top_results = 1000,
-                   folds, cv_loss,
+                   folds, cv_loss, o_as_na,
                    dependent_variable_name,
                    verbose,
                    ...) {
@@ -81,6 +80,8 @@ mbmdrc <- function(formula, data,
                        add = assertions)
   checkmate::assertNumber(alpha, lower = 0, upper = 1,
                           add = assertions)
+  checkmate::assertFlag(o_as_na,
+                        add = assertions)
   checkmate::assertChoice(adjustment, c("CODOMINANT", "ADDITIVE", "NONE"),
                           add = assertions)
   checkmate::assertInt(max_results, lower = 1, upper = 1e4)
@@ -175,7 +176,7 @@ mbmdrc <- function(formula, data,
 
     # Select prediction type
     pred_type <- switch(cv_loss,
-                        "auc" = "scoreprob",
+                        "auc" = "prob",
                         "bac" = "response")
 
     # Select loss function
@@ -202,7 +203,7 @@ mbmdrc <- function(formula, data,
                          append = FALSE,
                          na = "-9")
 
-      mbmdr <- do.call('c', sapply(dim, function(d) {
+      mbmdr <- do.call('c', lapply(dim, function(d) {
         mbmdR::mbmdr(file = cv_file, trait = model_type,
                      cpus.topfiles = 1,
                      cpus.permutations = 1,
@@ -221,7 +222,7 @@ mbmdrc <- function(formula, data,
       data_cv_test <- data_final[fold_idx == f,]
       pred <- predict.mbmdr(object = mbmdr, newdata = data_cv_test,
                             all = TRUE,
-                            o_as_na = FALSE,
+                            o_as_na = o_as_na,
                             type = pred_type)
 
       # Prepare CV loss for all top_result values
@@ -245,17 +246,17 @@ mbmdrc <- function(formula, data,
   }
 
   # Call MB-MDR ----
-  mbmdr <- do.call('c', sapply(dim, function(d) {
-               mbmdR::mbmdr(file = file, trait = model_type,
-                            work.dir = tempdir(),
-                            cpus.topfiles = 1, cpus.permutations = 1,
-                            n.pvalues = top_results,
-                            permutations = 0,
-                            group.size = min_cell_size, alpha = alpha,
-                            dim = d,
-                            multi.test.corr = "NONE", adjustment = adjustment,
-                            verbose = "MEDIUM")
-             }))
+  mbmdr <- do.call('c', lapply(dim, function(d) {
+    mbmdR::mbmdr(file = file, trait = model_type,
+                 work.dir = tempdir(),
+                 cpus.topfiles = 1, cpus.permutations = 1,
+                 n.pvalues = max_results,
+                 permutations = 0,
+                 group.size = min_cell_size, alpha = alpha,
+                 dim = d,
+                 multi.test.corr = "NONE", adjustment = adjustment,
+                 verbose = "MEDIUM")
+  }))
   result$mbmdr <- mbmdr
 
   result$call <- sys.call()
@@ -327,6 +328,8 @@ predict.mbmdr <- function(object, newdata, type = "response", top_results, all =
                           add = assertions)
   checkmate::assertFlag(all,
                         add = assertions)
+  checkmate::assertFlag(o_as_na,
+                        add = assertions)
   if(missing(top_results) & !all) {
     checkmate::reportAssertions(assertions)
     stop("Please specify the number of top results to enter predictions or set 'all=TRUE'")
@@ -375,7 +378,7 @@ predict.mbmdr <- function(object, newdata, type = "response", top_results, all =
       prob[object[[m]]$cell_labels[idx]=="O" | is.na(prob)] <- NA
     }
 
-    predictions[MODEL == m, PROB := prob]
+    predictions[MODEL == m, `:=`(PROB = prob)]
   }
 
   if(all) {
@@ -403,18 +406,18 @@ predict.mbmdr <- function(object, newdata, type = "response", top_results, all =
   } else {
     switch(type,
            # Round the mean case probability to 0 or 1 to return hard classification
-           "response" = return(predictions[MODEL<=top_results, list(predictions = round(mean(PROB))),
+           "response" = return(predictions[MODEL<=top_results, list(predictions = round(mean(PROB, na.rm = TRUE))),
                                            by = c("ID")]$predictions),
            # Return mean case probability over all models
-           "prob" = return(predictions[MODEL<=top_results, list(predictions = mean(PROB)),
+           "prob" = return(predictions[MODEL<=top_results, list(predictions = mean(PROB, na.rm = TRUE)),
                                        by = c("ID")]$predictions),
            # Return a risk score. Genotype combinations classified as H contribute +1,
            # genotype combinations classified as L contribute -1 and genotype combinations
            # classified as O contribute 0
-           "score" = return(predictions[MODEL<=top_results, list(predictions = sum(sign(PROB-0.5))),
+           "score" = return(predictions[MODEL<=top_results, list(predictions = sum(sign(PROB-0.5), na.rm = TRUE)),
                                         by = c("ID")]$predictions),
            # Return the score transformed to a [0, 1] interval
-           "scoreprob" = return(predictions[MODEL<=top_results, list(predictions = sum(sign(PROB-0.5))),
+           "scoreprob" = return(predictions[MODEL<=top_results, list(predictions = sum(sign(PROB-0.5), na.rm = TRUE)),
                                             by = c("ID")][, list(ID, predictions = range01(predictions))]$predictions))
   }
 
@@ -442,8 +445,8 @@ predict.mbmdrc <- function(object, newdata, type = "response", top_results, o_as
   } else {
     top_results <- object$top_results
   }
-  checkmate::assertChoice(o_as_na,
-                          add = assertions)
+  checkmate::assertFlag(o_as_na,
+                        add = assertions)
 
   checkmate::reportAssertions(assertions)
 

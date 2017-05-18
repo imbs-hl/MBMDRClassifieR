@@ -6,7 +6,7 @@
 \usage{
 mbmdrc(formula, data, order = 2, min_cell_size = 10, alpha = 0.1,
   adjustment = "NONE", max_results = 1000, top_results = 1000, folds,
-  cv_loss, dependent_variable_name, verbose, ...)
+  cv_loss, o_as_na, dependent_variable_name, verbose, ...)
 }
 \arguments{
 \item{formula}{[\code{formula}]\cr
@@ -54,6 +54,9 @@ should be used.}
 One of \code{auc} or \code{bac}, specifying which loss
 should be used to find optimal \code{top_results}.}
 
+\item{o_as_na}{[\code{bool}]\cr
+Encode non informative cells with NA or with 0.5.}
+
 \item{dependent_variable_name}{[\code{string}]\cr
 Name of dependent variable, needed if no formula given.}
 
@@ -63,10 +66,6 @@ information about progress. Level 0 will switch off any
 output. Levels 2 and 3 are for debugging purposes.}
 
 \item{...}{Further arguments passed to or from other methods.}
-
-\item{log_file}{[\code{string}]\cr
-File path for a log file. If empty (default) logging is
-sent to console.}
 }
 \value{
 A S3 object of class \code{mbmdrc}.
