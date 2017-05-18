@@ -29,7 +29,7 @@ relevant.}
 
 \item{alpha}{[\code{double}]\cr
 Single numeric as significance level used during HLO
-classification of genotype combinations.#'}
+classification of genotype combinations.}
 
 \item{adjustment}{[\code{string}]\cr
 Adjust method to be used.
@@ -63,9 +63,7 @@ Name of dependent variable, needed if no formula given.}
 \item{verbose}{[\code{int}]\cr
 Level of verbosity. Default is level 1 giving some basic
 information about progress. Level 0 will switch off any
-output. Levels 2 and 3 are for debugging purposes.}
-
-\item{...}{Further arguments passed to or from other methods.}
+output.}
 }
 \value{
 A S3 object of class \code{mbmdrc}.

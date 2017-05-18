@@ -45,8 +45,7 @@
 #' @param verbose                 [\code{int}]\cr
 #' 									              Level of verbosity. Default is level 1 giving some basic
 #' 									              information about progress. Level 0 will switch off any
-#' 									              output. Levels 2 and 3 are for debugging purposes.
-#' @param ...                     Further arguments passed to or from other methods.
+#' 									              output.
 #'
 #' @return A S3 object of class \code{mbmdrc}.
 #'
@@ -90,9 +89,14 @@ mbmdrc <- function(formula, data,
   if(missing(verbose)) {
     verbose <- 1
   } else {
-    checkmate::assertInt(verbose, lower = 0, upper = 3,
+    checkmate::assertInt(verbose, lower = 0, upper = 1,
                          add = assertions)
   }
+
+  verbose <- switch(verbose,
+                    "0" = BBmisc::suppressAll,
+                    "1" = suppressMessages
+  )
 
   # Formula interface ----
   if(missing(formula)) {
@@ -192,7 +196,7 @@ mbmdrc <- function(formula, data,
     fold_idx <- sample(1:folds, nrow(data_final), replace = TRUE)
 
     # Calculate the MB-MDR for each fold and assess current top_results value
-    cv_performance <- rbindlist(lapply(1:folds, function(f) {
+    cv_performance <- verbose(rbindlist(lapply(1:folds, function(f) {
       # Generate MB-MDR models on CV training data
       data_cv_train <- data_final[fold_idx != f,]
       response_cv_train <- response[fold_idx != f]
@@ -234,7 +238,7 @@ mbmdrc <- function(formula, data,
                                     response_cv_test,
                                     positive = 1,
                                     negative = 0)), by = "top_results"]
-    }), idcol = "fold")
+    }), idcol = "fold"))
 
     # Select top_results value with optimal loss
     mean_cv_loss <- NULL # hack to circumvent R CMD CHECK notes
@@ -246,7 +250,7 @@ mbmdrc <- function(formula, data,
   }
 
   # Call MB-MDR ----
-  mbmdr <- do.call('c', lapply(dim, function(d) {
+  mbmdr <- verbose(do.call('c', lapply(dim, function(d) {
     mbmdR::mbmdr(file = file, trait = model_type,
                  work.dir = tempdir(),
                  cpus.topfiles = 1, cpus.permutations = 1,
@@ -256,7 +260,7 @@ mbmdrc <- function(formula, data,
                  dim = d,
                  multi.test.corr = "NONE", adjustment = adjustment,
                  verbose = "MEDIUM")
-  }))
+  })))
   result$mbmdr <- mbmdr
 
   result$call <- sys.call()
@@ -343,18 +347,17 @@ predict.mbmdr <- function(object, newdata, type = "response", top_results, all =
   checkmate::reportAssertions(assertions)
 
   # Get number of models and number of samples
-  num_models <- length(object)
+  num_models <- if(all) {
+    length(object)
+  } else {
+    top_results
+  }
   num_samples <- nrow(newdata)
 
-  # Initialize predictions
-  predictions <- data.table::data.table(MODEL = rep(1:num_models, each = num_samples),
-                                        ID = rep(1:num_samples, times = num_models),
-                                        PROB = numeric(num_models * num_samples))
-
   # Iterate through MB-MDR models
-  for(m in 1:num_models) {
+  predictions <- rbindlist(lapply(1:num_models, function(m) {
     # Get genotypes
-    genotypes <- as.matrix(newdata[, object[[m]]$features])
+    genotypes <- as.matrix(subset(newdata, select = object[[m]]$features))
 
     # Construct bases for indexing
     num_rows <- attr(object[[m]]$cell_labels, "num_rows")
@@ -378,8 +381,8 @@ predict.mbmdr <- function(object, newdata, type = "response", top_results, all =
       prob[object[[m]]$cell_labels[idx]=="O" | is.na(prob)] <- NA
     }
 
-    predictions[MODEL == m, `:=`(PROB = prob)]
-  }
+    data.table(ID = 1:num_samples, PROB = prob)
+  }), idcol = "MODEL")
 
   if(all) {
     switch(type,
