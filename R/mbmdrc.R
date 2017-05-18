@@ -19,7 +19,7 @@
 #'                                relevant.
 #' @param alpha         			    [\code{double}]\cr
 #'                      			    Single numeric as significance level used during HLO
-#'                      			    classification of genotype combinations.#'
+#'                      			    classification of genotype combinations.
 #' @param adjustment              [\code{string}]\cr
 #'                                Adjust method to be used.
 #'                                "CODOMINANT", "ADDITIVE" or "NONE" (default).
