@@ -193,7 +193,30 @@ mbmdrc <- function(formula, data,
       top_results <- 1:max(top_results)
     }
 
-    fold_idx <- sample(1:folds, nrow(data_final), replace = TRUE)
+    if(model_type == "binary") {
+      # Stratified resampling
+      fold_idx <- integer(length(response))
+      fold <- 1
+      lapply(BBmisc::chunk(which(response == levels(response)[1]), n.chunks = folds, shuffle = TRUE),
+             FUN = function(chunk) {
+               fold_idx[chunk] <<- fold
+               fold <<- fold + 1
+             })
+      fold <- 1
+      lapply(BBmisc::chunk(which(response == levels(response)[2]), n.chunks = folds, shuffle = TRUE),
+             FUN = function(chunk) {
+               fold_idx[chunk] <<- fold
+               fold <<- fold + 1
+             })
+    } else {
+      fold_idx <- integer(length(response))
+      fold <- 1
+      lapply(BBmisc::chunk(1:length(response), n.chunks = folds, shuffle = TRUE),
+             FUN = function(chunk) {
+               fold_idx[chunk] <<- fold
+               fold <<- fold + 1
+             })
+    }
 
     # Calculate the MB-MDR for each fold and assess current top_results value
     cv_performance <- verbose(rbindlist(lapply(1:folds, function(f) {
