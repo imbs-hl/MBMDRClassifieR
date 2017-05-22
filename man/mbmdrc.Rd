@@ -64,6 +64,8 @@ Name of dependent variable, needed if no formula given.}
 Level of verbosity. Default is level 1 giving some basic
 information about progress. Level 0 will switch off any
 output.}
+
+\item{...}{Arguments passed from and to other functions.}
 }
 \value{
 A S3 object of class \code{mbmdrc}.

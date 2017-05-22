@@ -46,6 +46,7 @@
 #' 									              Level of verbosity. Default is level 1 giving some basic
 #' 									              information about progress. Level 0 will switch off any
 #' 									              output.
+#' @param ...                     Arguments passed from and to other functions.
 #'
 #' @return A S3 object of class \code{mbmdrc}.
 #'
@@ -341,6 +342,13 @@ mbmdrc <- function(formula, data,
 #' @import data.table
 predict.mbmdr <- function(object, newdata, type = "response", top_results, all = FALSE, o_as_na = TRUE, ...) {
 
+  # data.table dummys
+  PROB <- NULL
+  MODEL <- NULL
+  SCOREPROB <- NULL
+  SCORE <- NULL
+  ID <- NULL
+
   # Input checks ----
   assertions <- checkmate::makeAssertCollection()
   checkmate::assertClass(object, "mbmdr",
@@ -477,7 +485,7 @@ predict.mbmdrc <- function(object, newdata, type = "response", top_results, o_as
   checkmate::reportAssertions(assertions)
 
   predictions <- stats::predict(object$mbmdr, newdata = newdata,
-                                model_type = model_type, type = type,
+                                type = type,
                                 top_results = top_results,
                                 o_as_na = o_as_na, ...)
 
