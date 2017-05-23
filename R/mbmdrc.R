@@ -287,7 +287,7 @@ mbmdrc <- function(formula, data,
                  multi.test.corr = "NONE", adjustment = adjustment,
                  verbose = "MEDIUM")
   })))
-  file.remove(list.files(tempdir(), pattern = basename(cv_file),
+  file.remove(list.files(tempdir(), pattern = basename(file),
                          full.names = TRUE))
   result$mbmdr <- mbmdr
 
