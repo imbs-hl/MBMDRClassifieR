@@ -245,6 +245,7 @@ mbmdrc <- function(formula, data,
                      adjustment = adjustment,
                      verbose = "MEDIUM")
       }))
+      unlink(list.files(tempdir(), pattern = basename(cv_file), full.names = TRUE))
 
       # Predict on CV testing data
       data_cv_test <- data_final[fold_idx == f,]
@@ -285,6 +286,7 @@ mbmdrc <- function(formula, data,
                  multi.test.corr = "NONE", adjustment = adjustment,
                  verbose = "MEDIUM")
   })))
+  unlink(list.files(tempdir(), pattern = basename(cv_file), full.names = TRUE))
   result$mbmdr <- mbmdr
 
   result$call <- sys.call()
