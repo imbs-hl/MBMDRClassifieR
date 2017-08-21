@@ -4,9 +4,9 @@
 \alias{mbmdrc}
 \title{MB-MDR based classifier}
 \usage{
-mbmdrc(formula, data, order = 2, min_cell_size = 10, alpha = 0.1,
-  adjustment = "NONE", max_results = 1000, top_results = 1000, folds,
-  cv_loss, o_as_na, dependent_variable_name, verbose, ...)
+mbmdrc(formula, data, order = 2, min.cell.size = 10, alpha = 0.1,
+  adjustment = "NONE", max.results = 1000, top.results = 1000, folds,
+  cv.loss, o.as.na, dependent.variable.name, verbose, ...)
 }
 \arguments{
 \item{formula}{[\code{formula}]\cr
@@ -22,7 +22,7 @@ Single integer specifying the interaction depth used
 in the MB-MDR algorithm. Possible options are
 1 and 2.}
 
-\item{min_cell_size}{[\code{int}]\cr
+\item{min.cell.size}{[\code{int}]\cr
 Single integer specifying the minimum number of
 observation in a genotype combination to be statistically
 relevant.}
@@ -35,11 +35,11 @@ classification of genotype combinations.}
 Adjust method to be used.
 "CODOMINANT", "ADDITIVE" or "NONE" (default).}
 
-\item{max_results}{[\code{int}]\cr
+\item{max.results}{[\code{int}]\cr
 Single integer specifying the number of top models to
 report.}
 
-\item{top_results}{[\code{int}]\cr
+\item{top.results}{[\code{int}]\cr
 Single integer specifying how many models shall be used
 for prediction. If \code{folds} and \code{cv.loss} are
 set, this value specifies the upper limit of top results
@@ -47,17 +47,17 @@ to assess in CV.}
 
 \item{folds}{[\code{int}]\cr
 Single interger specifying how many folds for internal
-cross validation to find optimal \code{top_results}
+cross validation to find optimal \code{top.results}
 should be used.}
 
-\item{cv_loss}{[\code{character}]\cr
+\item{cv.loss}{[\code{character}]\cr
 One of \code{auc} or \code{bac}, specifying which loss
-should be used to find optimal \code{top_results}.}
+should be used to find optimal \code{top.results}.}
 
-\item{o_as_na}{[\code{bool}]\cr
+\item{o.as.na}{[\code{bool}]\cr
 Encode non informative cells with NA or with 0.5.}
 
-\item{dependent_variable_name}{[\code{string}]\cr
+\item{dependent.variable.name}{[\code{string}]\cr
 Name of dependent variable, needed if no formula given.}
 
 \item{verbose}{[\code{int}]\cr

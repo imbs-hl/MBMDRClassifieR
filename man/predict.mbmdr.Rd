@@ -5,11 +5,11 @@
 \alias{predict.mbmdrc}
 \title{MB-MDR classifier prediction}
 \usage{
-\method{predict}{mbmdr}(object, newdata, type = "response", top_results,
-  all = FALSE, o_as_na = TRUE, ...)
+\method{predict}{mbmdr}(object, newdata, type = "response", top.results,
+  all = FALSE, o.as.na = TRUE, ...)
 
-\method{predict}{mbmdrc}(object, newdata, type = "response", top_results,
-  o_as_na = TRUE, ...)
+\method{predict}{mbmdrc}(object, newdata, type = "response", top.results,
+  o.as.na = TRUE, ...)
 }
 \arguments{
 \item{object}{[\code{mbmdr}]\cr
@@ -23,13 +23,13 @@ Type of prediction. One of \code{response}, \code{prob},
 \code{score} or \code{scoreprob}. See details.
 Default is \code{response}.}
 
-\item{top_results}{[\code{int}]\cr
+\item{top.results}{[\code{int}]\cr
 How many models are used for prediction.}
 
 \item{all}{[\code{bool}]\cr
 Output predictions for all possible top results.}
 
-\item{o_as_na}{[\code{bool}]\cr
+\item{o.as.na}{[\code{bool}]\cr
 Encode non informative cells with NA or with 0.5.}
 
 \item{...}{Further arguments passed to or from other methods.}
