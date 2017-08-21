@@ -40,7 +40,7 @@
 #'                      			    should be used to find optimal \code{top.results}.
 #' @param o.as.na                 [\code{bool}]\cr
 #'                                Encode non informative cells with NA or with 0.5.
-#' @param dependent_variable_name [\code{string}]\cr
+#' @param dependent.variable.name [\code{string}]\cr
 #' 									              Name of dependent variable, needed if no formula given.
 #' @param verbose                 [\code{int}]\cr
 #' 									              Level of verbosity. Default is level 1 giving some basic
@@ -63,7 +63,7 @@ mbmdrc <- function(formula, data,
                    max.results = 1000,
                    top.results = 1000,
                    folds, cv.loss, o.as.na,
-                   dependent_variable_name,
+                   dependent.variable.name,
                    verbose,
                    ...) {
 
@@ -101,16 +101,16 @@ mbmdrc <- function(formula, data,
 
   # Formula interface ----
   if(missing(formula)) {
-    if(missing(dependent_variable_name)) {
+    if(missing(dependent.variable.name)) {
       assertions$push("Please give formula or dependent variable name.")
     }
-    checkmate::assertString(dependent_variable_name,
+    checkmate::assertString(dependent.variable.name,
                             add = assertions)
-    checkmate::assertChoice(dependent_variable_name, choices = colnames(data),
+    checkmate::assertChoice(dependent.variable.name, choices = colnames(data),
                             add = assertions)
 
-    response <- data[, dependent_variable_name]
-    data_selected <- data[, -which(colnames(data)==dependent_variable_name)]
+    response <- data[, dependent.variable.name]
+    data_selected <- data[, -which(colnames(data)==dependent.variable.name)]
   } else {
     formula <- stats::as.formula(formula)
     checkmate::assertClass(formula, classes = "formula",
@@ -143,7 +143,8 @@ mbmdrc <- function(formula, data,
     dependent_variable_name <- names(data_selected)[1]
     independent_variable_names <- names(data_selected)[-1]
   } else {
-    indepentend_variable_names <- colnames(data_selected)[colnames(data_selected) != dependent_variable_name]
+    dependent_variable_name <- dependent.variable.name
+    indepentend_variable_names <- colnames(data_selected)[colnames(data_selected) != dependent.variable.name]
   }
 
   # Input data and variable names, create final data matrix
