@@ -229,7 +229,7 @@ mbmdrc <- function(formula, data,
       data_cv_train <- data_final[fold_idx != f,]
       response_cv_train <- response[fold_idx != f]
       cv_file <- tempfile()
-      data.table::fwrite(data.frame("y" = ifelse(is.factor(response_cv_tain),
+      data.table::fwrite(data.frame("y" = ifelse(is.factor(response_cv_train),
                                                  as.integer(response_cv_train) - 1,
                                                  response_cv_train),
                                     data_cv_train),
