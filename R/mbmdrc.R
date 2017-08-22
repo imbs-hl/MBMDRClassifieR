@@ -56,12 +56,12 @@
 #' @export
 #' @import data.table
 mbmdrc <- function(formula, data,
-                   order = 2,
-                   min.cell.size = 10,
+                   order = 2L,
+                   min.cell.size = 10L,
                    alpha = 0.1,
                    adjustment = "NONE",
-                   max.results = 1000,
-                   top.results = 1000,
+                   max.results = 1000L,
+                   top.results = 1000L,
                    folds, cv.loss, o.as.na,
                    dependent.variable.name,
                    verbose,
@@ -110,7 +110,7 @@ mbmdrc <- function(formula, data,
                             add = assertions)
 
     response <- data[, dependent.variable.name]
-    data_selected <- data[, -which(colnames(data)==dependent.variable.name)]
+    data_selected <- data.matrix(data[, -which(colnames(data)==dependent.variable.name)])
   } else {
     formula <- stats::as.formula(formula)
     checkmate::assertClass(formula, classes = "formula",
