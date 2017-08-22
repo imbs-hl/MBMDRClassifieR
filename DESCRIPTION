@@ -1,7 +1,7 @@
 Package: MBMDRClassifieR
 Type: Package
 Title: Classification Based On MB-MDR Algorithm
-Version: 0.1.5
+Version: 0.1.5-1
 Authors@R: person("Gola", "Damian", email = "gola@imbs.uni-luebeck.de", 
   role = c("aut", "cre"))
 Description: R package for classification with genetic data accounting for SNP-SNP interactions.
