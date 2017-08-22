@@ -4,8 +4,8 @@
 \alias{mbmdrc}
 \title{MB-MDR based classifier}
 \usage{
-mbmdrc(formula, data, order = 2, min.cell.size = 10, alpha = 0.1,
-  adjustment = "NONE", max.results = 1000, top.results = 1000, folds,
+mbmdrc(formula, data, order = 2L, min.cell.size = 10L, alpha = 0.1,
+  adjustment = "NONE", max.results = 1000L, top.results = 1000L, folds,
   cv.loss, o.as.na, dependent.variable.name, verbose, ...)
 }
 \arguments{
