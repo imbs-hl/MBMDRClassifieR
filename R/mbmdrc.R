@@ -244,7 +244,8 @@ mbmdrc <- function(formula, data,
                      dim = d,
                      multi.test.corr = "NONE",
                      adjustment = adjustment,
-                     verbose = "MEDIUM")
+                     verbose = "MEDIUM",
+                     clean = TRUE)
       }))
       file.remove(list.files(tempdir(), pattern = basename(cv_file),
                              full.names = TRUE))
@@ -285,8 +286,10 @@ mbmdrc <- function(formula, data,
                  permutations = 0,
                  group.size = min.cell.size, alpha = alpha,
                  dim = d,
-                 multi.test.corr = "NONE", adjustment = adjustment,
-                 verbose = "MEDIUM")
+                 multi.test.corr = "NONE",
+                 adjustment = adjustment,
+                 verbose = "MEDIUM",
+                 clean = TRUE)
   })))
   file.remove(list.files(tempdir(), pattern = basename(file),
                          full.names = TRUE))
