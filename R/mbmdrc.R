@@ -157,7 +157,10 @@ mbmdrc <- function(formula, data,
 
   # Write MB-MDR file ----
   file <- tempfile()
-  data.table::fwrite(data.frame("y" = response, data_final),
+  data.table::fwrite(data.frame("y" = ifelse(is.factor(response),
+                                             as.integer(response) - 1,
+                                             response),
+                                data_final),
                      file = file,
                      sep = " ",
                      append = FALSE,
@@ -226,7 +229,10 @@ mbmdrc <- function(formula, data,
       data_cv_train <- data_final[fold_idx != f,]
       response_cv_train <- response[fold_idx != f]
       cv_file <- tempfile()
-      data.table::fwrite(data.frame("y" = response_cv_train, data_cv_train),
+      data.table::fwrite(data.frame("y" = ifelse(is.factor(response_cv_tain),
+                                                 as.integer(response_cv_train) - 1,
+                                                 response_cv_train),
+                                    data_cv_train),
                          file = cv_file,
                          sep = " ",
                          append = FALSE,
