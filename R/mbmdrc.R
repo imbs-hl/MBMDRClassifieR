@@ -157,9 +157,12 @@ mbmdrc <- function(formula, data,
 
   # Write MB-MDR file ----
   file <- tempfile()
-  data.table::fwrite(data.frame("y" = ifelse(is.factor(response),
-                                             as.integer(response) - 1,
-                                             response),
+  y <- if (is.factor(response)) {
+    as.integer(response) - 1
+  } else {
+    response
+  }
+  data.table::fwrite(data.frame("y" = y,
                                 data_final),
                      file = file,
                      sep = " ",
@@ -229,9 +232,12 @@ mbmdrc <- function(formula, data,
       data_cv_train <- data_final[fold_idx != f,]
       response_cv_train <- response[fold_idx != f]
       cv_file <- tempfile()
-      data.table::fwrite(data.frame("y" = ifelse(is.factor(response_cv_train),
-                                                 as.integer(response_cv_train) - 1,
-                                                 response_cv_train),
+      y <- if (is.factor(response_cv_train)) {
+        as.integer(response_cv_train) - 1
+      } else {
+        response_cv_train
+      }
+      data.table::fwrite(data.frame("y" = y,
                                     data_cv_train),
                          file = cv_file,
                          sep = " ",
@@ -270,8 +276,8 @@ mbmdrc <- function(formula, data,
                    value.name = pred_type)
       pred[, list(cv_loss = measure(get(pred_type),
                                     response_cv_test,
-                                    positive = 1,
-                                    negative = 0)), by = "top_results"]
+                                    positive = levels(response_cv_test)[2],
+                                    negative = levels(response_cv_test)[1])), by = "top_results"]
     }), idcol = "fold"))
 
     # Select top_results value with optimal loss
