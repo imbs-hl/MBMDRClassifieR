@@ -266,7 +266,7 @@ mbmdrc <- function(formula, data,
 
       # Predict on CV testing data
       data_cv_test <- data_final[fold_idx == f,]
-      pred <- predict.mbmdr(object = mbmdr, newdata = data_cv_test,
+      pred <- predict.mdr_models(object = mbmdr, newdata = data_cv_test,
                             all = TRUE,
                             o.as.na = o.as.na,
                             global.mean = cv_global_mean,
@@ -358,13 +358,13 @@ mbmdrc <- function(formula, data,
 #' H contribute +1, as L contribute -1 and as O contribute 0 to the score.
 #'
 #' If a genotype combination is classified as O by MB-MDR, the case probability
-#' is not significantly different from 0.5. On the other hand, there might have
-#' been just too few observations in the training data so that \code{NA} might
-#' be more reasonable as contribution to \code{response} and \code{prob} type
-#' predictions.
+#' is not significantly different from the global mean. On the other hand, there
+#' might have been just too few observations in the training data so that
+#' \code{NA} might be more reasonable as contribution to \code{response} and
+#' \code{prob} type predictions.
 #'
 #' @import data.table
-predict.mbmdr <- function(object, newdata, type = "response", top.results, all = FALSE, o.as.na = TRUE, global.mean = 0.5, ...) {
+predict.mdr_models <- function(object, newdata, type = "response", top.results, all = FALSE, o.as.na = TRUE, global.mean = 0.5, ...) {
 
   # data.table dummys
   PROB <- NULL
@@ -375,7 +375,7 @@ predict.mbmdr <- function(object, newdata, type = "response", top.results, all =
 
   # Input checks ----
   assertions <- checkmate::makeAssertCollection()
-  checkmate::assertClass(object, "mbmdr",
+  checkmate::assertClass(object, "mdr_models",
                          add = assertions)
   checkmate::assert(checkmate::checkDataFrame(newdata),
                     checkmate::checkMatrix(newdata),
@@ -415,6 +415,7 @@ predict.mbmdr <- function(object, newdata, type = "response", top.results, all =
   predictions <- rbindlist(lapply(1:num_models, function(m) {
     # Get genotypes
     genotypes <- as.matrix(subset(newdata, select = object[[m]]$features))
+    storage.mode(genotypes) <- "integer"
 
     # Construct bases for indexing
     num_rows <- attr(object[[m]]$cell_labels, "num_rows")
@@ -483,7 +484,13 @@ predict.mbmdr <- function(object, newdata, type = "response", top.results, all =
 
 }
 
-#' @rdname predict.mbmdr
+#' @export
+#' @rdname predict.mdr_models
+predict.mbmdr <- function(object, newdata, ...) {
+  predict(object$mdr_models, newdata, ...)
+}
+
+#' @rdname predict.mdr_models
 #'
 #' @export
 predict.mbmdrc <- function(object, newdata, type = "response", top.results, o.as.na = TRUE, ...) {
