@@ -264,7 +264,7 @@ mbmdrc <- function(formula, data,
 
       # Predict on CV testing data
       data_cv_test <- data_final[fold_idx == f,]
-      pred <- predict.mbmdr(object = mbmdr, newdata = data_cv_test,
+      pred <- predict.mbmdr(object = mbmdr$mdr_models, newdata = data_cv_test,
                             all = TRUE,
                             o.as.na = o.as.na,
                             type = pred_type)
@@ -305,7 +305,7 @@ mbmdrc <- function(formula, data,
   })))
   file.remove(list.files(tempdir(), pattern = basename(file),
                          full.names = TRUE))
-  result$mbmdr <- mbmdr
+  result$mbmdr <- mbmdr$mdr_models
 
   result$call <- sys.call()
   result$num_samples <- nrow(data_final)
