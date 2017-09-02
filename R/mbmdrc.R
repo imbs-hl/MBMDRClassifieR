@@ -162,6 +162,7 @@ mbmdrc <- function(formula, data,
   } else {
     response
   }
+  global_mean = mean(y)
   data.table::fwrite(data.frame("y" = y,
                                 data_final),
                      file = file,
@@ -237,6 +238,7 @@ mbmdrc <- function(formula, data,
       } else {
         response_cv_train
       }
+      cv_global_mean <- mean(y)
       data.table::fwrite(data.frame("y" = y,
                                     data_cv_train),
                          file = cv_file,
@@ -267,6 +269,7 @@ mbmdrc <- function(formula, data,
       pred <- predict.mbmdr(object = mbmdr, newdata = data_cv_test,
                             all = TRUE,
                             o.as.na = o.as.na,
+                            global.mean = cv_global_mean,
                             type = pred_type)
 
       # Prepare CV loss for all top_result values
@@ -313,6 +316,7 @@ mbmdrc <- function(formula, data,
   result$num_combinations <- choose(ncol(data_final), order)
   result$model_type <- model_type
   result$top_results <- top_results
+  result$global_mean <- global_mean
   if (is.factor(response)) {
     result$levels <- levels(droplevels(response))
   }
@@ -360,7 +364,7 @@ mbmdrc <- function(formula, data,
 #' predictions.
 #'
 #' @import data.table
-predict.mbmdr <- function(object, newdata, type = "response", top.results, all = FALSE, o.as.na = TRUE, ...) {
+predict.mbmdr <- function(object, newdata, type = "response", top.results, all = FALSE, o.as.na = TRUE, global.mean = 0.5, ...) {
 
   # data.table dummys
   PROB <- NULL
@@ -385,6 +389,8 @@ predict.mbmdr <- function(object, newdata, type = "response", top.results, all =
                         add = assertions)
   checkmate::assertFlag(o.as.na,
                         add = assertions)
+  checkmate::assertNumber(global.mean, finite = TRUE, null.ok = FALSE,
+                          add = assertions)
   if(missing(top.results) & !all) {
     checkmate::reportAssertions(assertions)
     stop("Please specify the number of top results to enter predictions or set 'all=TRUE'")
@@ -426,7 +432,7 @@ predict.mbmdr <- function(object, newdata, type = "response", top.results, all =
 
     if(!o.as.na) {
       # Set cell predictions to 0.5 for non-informative cells or feature combinations not present in training data
-      prob[object[[m]]$cell_labels[idx]=="O" | is.na(prob)] <- 0.5
+      prob[object[[m]]$cell_labels[idx]=="O" | is.na(prob)] <- global.mean
     } else {
       # Set cell predictions to NA for non-informative cells or feature combinations not present in training data
       prob[object[[m]]$cell_labels[idx]=="O" | is.na(prob)] <- NA
@@ -507,7 +513,8 @@ predict.mbmdrc <- function(object, newdata, type = "response", top.results, o.as
   predictions <- stats::predict(object$mbmdr, newdata = newdata,
                                 type = type,
                                 top.results = top_results,
-                                o.as.na = o.as.na, ...)
+                                o.as.na = o.as.na,
+                                global.mean = object$global_mean, ...)
 
   if(type %in% c("prob", "scoreprob")) {
     predictions <- cbind(1-predictions, predictions)
