@@ -6,7 +6,7 @@
 \usage{
 mbmdrc(formula, data, order = 2L, min.cell.size = 10L, alpha = 0.1,
   adjustment = "NONE", max.results = 1000L, top.results = 1000L, folds,
-  cv.loss, o.as.na, dependent.variable.name, verbose, ...)
+  cv.loss, o.as.na = FALSE, dependent.variable.name, verbose, ...)
 }
 \arguments{
 \item{formula}{[\code{formula}]\cr
