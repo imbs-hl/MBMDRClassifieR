@@ -87,7 +87,7 @@ mbmdrc <- function(formula, data,
   checkmate::assertInt(max.results, lower = 1, upper = 1e4)
   checkmate::assertInt(top.results, lower = 1, upper = max.results)
 
-  if(missing(verbose)) {
+  if (missing(verbose)) {
     verbose <- 1
   } else {
     checkmate::assertInt(verbose, lower = 0, upper = 1,
@@ -100,8 +100,8 @@ mbmdrc <- function(formula, data,
   )
 
   # Formula interface ----
-  if(missing(formula)) {
-    if(missing(dependent.variable.name)) {
+  if (missing(formula)) {
+    if (missing(dependent.variable.name)) {
       assertions$push("Please give formula or dependent variable name.")
     }
     checkmate::assertString(dependent.variable.name,
@@ -110,7 +110,7 @@ mbmdrc <- function(formula, data,
                             add = assertions)
 
     response <- data[, dependent.variable.name]
-    data_selected <- data.matrix(data[, -which(colnames(data)==dependent.variable.name)])
+    data_selected <- data.matrix(data[, -which(colnames(data) == dependent.variable.name)])
   } else {
     formula <- stats::as.formula(formula)
     checkmate::assertClass(formula, classes = "formula",
@@ -120,7 +120,7 @@ mbmdrc <- function(formula, data,
   }
 
   # Prediction type ----
-  if(is.factor(response)) {
+  if (is.factor(response)) {
     checkmate::assertFactor(response, n.levels = 2,
                             add = assertions)
     model_type <- "binary" # classification
@@ -139,7 +139,7 @@ mbmdrc <- function(formula, data,
   checkmate::reportAssertions(assertions)
 
   # Dependent variable name ----
-  if(!missing(formula)) {
+  if (!missing(formula)) {
     dependent_variable_name <- names(data_selected)[1]
     independent_variable_names <- names(data_selected)[-1]
   } else {
@@ -148,7 +148,7 @@ mbmdrc <- function(formula, data,
   }
 
   # Input data and variable names, create final data matrix
-  if(is.matrix(data_selected)) {
+  if (is.matrix(data_selected)) {
     data_final <- data_selected
   } else {
     data_final <- data.matrix(data_selected)[, -1]
@@ -181,7 +181,7 @@ mbmdrc <- function(formula, data,
   top_results <- min(max_results, top.results)
 
   # Internal cross validation ----
-  if(!missing(folds) & !missing(cv.loss)) {
+  if (!missing(folds) & !missing(cv.loss)) {
     checkmate::assertInt(folds, na.ok = TRUE, null.ok = TRUE, lower = 2, upper = 10,
                          add = assertions)
     checkmate::assertChoice(cv.loss, choices = c("auc", "bac"),
@@ -198,11 +198,11 @@ mbmdrc <- function(formula, data,
                       "bac" = bac)
 
     # Set search space for optimal top_results value
-    if(length(top_results) == 1) {
+    if (length(top_results) == 1) {
       top_results <- 1:max(top_results)
     }
 
-    if(model_type == "binary") {
+    if (model_type == "binary") {
       # Stratified resampling
       fold_idx <- integer(length(response))
       fold <- 1
@@ -391,10 +391,10 @@ predict.mdr_models <- function(object, newdata, type = "response", top.results, 
                         add = assertions)
   checkmate::assertNumber(global.mean, finite = TRUE, null.ok = FALSE,
                           add = assertions)
-  if(missing(top.results) & !all) {
+  if (missing(top.results) & !all) {
     checkmate::reportAssertions(assertions)
     stop("Please specify the number of top results to enter predictions or set 'all=TRUE'")
-  } else if(!missing(top.results)) {
+  } else if (!missing(top.results)) {
     checkmate::assertInt(top.results,
                          lower = 0, upper = length(object),
                          na.ok = FALSE, null.ok = FALSE,
@@ -404,7 +404,7 @@ predict.mdr_models <- function(object, newdata, type = "response", top.results, 
   checkmate::reportAssertions(assertions)
 
   # Get number of models and number of samples
-  num_models <- if(all) {
+  num_models <- if (all) {
     length(object)
   } else {
     top.results
@@ -419,30 +419,30 @@ predict.mdr_models <- function(object, newdata, type = "response", top.results, 
 
     # Construct bases for indexing
     num_rows <- attr(object[[m]]$cell_labels, "num_rows")
-    bases <- if(num_rows == 1) {
+    bases <- if (num_rows == 1) {
       length(object[[m]]$cell_labels)
     } else {
       c(length(object[[m]]$cell_labels)/num_rows, num_rows)
     }
 
     # Construct index as linear combination of bases and feature combination
-    idx <- genotypes %*% bases^(0:(length(bases)-1)) + 1
+    idx <- genotypes %*% bases^(0:(length(bases) - 1)) + 1
 
     # Get cell predictions
     prob <- object[[m]]$cell_predictions[idx]
 
-    if(!o.as.na) {
-      # Set cell predictions to 0.5 for non-informative cells or feature combinations not present in training data
-      prob[object[[m]]$cell_labels[idx]=="O" | is.na(prob)] <- global.mean
+    if (!o.as.na) {
+      # Set cell predictions to global for non-informative cells or feature combinations not present in training data
+      prob[object[[m]]$cell_labels[idx] == "O" | is.na(prob)] <- global.mean
     } else {
       # Set cell predictions to NA for non-informative cells or feature combinations not present in training data
-      prob[object[[m]]$cell_labels[idx]=="O" | is.na(prob)] <- NA
+      prob[object[[m]]$cell_labels[idx] == "O" | is.na(prob)] <- NA
     }
 
     data.table(ID = 1:num_samples, PROB = prob)
   }), idcol = "MODEL")
 
-  if(all) {
+  if (all) {
     switch(type,
            # Round the mean case probability to 0 or 1 to return hard classification
            "response" = return(dcast(predictions[, list(RESPONSE = round(cumsum(PROB)/1:max(MODEL)),
@@ -455,11 +455,11 @@ predict.mdr_models <- function(object, newdata, type = "response", top.results, 
            # Return a risk score. Genotype combinations classified as H contribute +1,
            # genotype combinations classified as L contribute -1 and genotype combinations
            # classified as O contribute 0
-           "score" = return(dcast(predictions[, list(SCORE = cumsum(sign(PROB-0.5)),
+           "score" = return(dcast(predictions[, list(SCORE = cumsum(sign(PROB - 0.5)),
                                                      TOPRESULTS = 1:max(MODEL)), by = c("ID") ],
                                   ID~TOPRESULTS, value.var = "SCORE")),
            # Return the score transformed to a [0, 1] interval
-           "scoreprob"= return(dcast(predictions[, list(SCORE = cumsum(sign(PROB-0.5)),
+           "scoreprob" = return(dcast(predictions[, list(SCORE = cumsum(sign(PROB - 0.5)),
                                                         TOPRESULTS = 1:max(MODEL)), by = c("ID")][, SCOREPROB := range01(SCORE),
                                                                                                   by = c("TOPRESULTS")],
                                      ID~TOPRESULTS,
@@ -467,18 +467,18 @@ predict.mdr_models <- function(object, newdata, type = "response", top.results, 
   } else {
     switch(type,
            # Round the mean case probability to 0 or 1 to return hard classification
-           "response" = return(predictions[MODEL<=top.results, list(predictions = round(mean(PROB, na.rm = TRUE))),
+           "response" = return(predictions[MODEL <= top.results, list(predictions = round(mean(PROB, na.rm = TRUE))),
                                            by = c("ID")]$predictions),
            # Return mean case probability over all models
-           "prob" = return(predictions[MODEL<=top.results, list(predictions = mean(PROB, na.rm = TRUE)),
+           "prob" = return(predictions[MODEL <= top.results, list(predictions = mean(PROB, na.rm = TRUE)),
                                        by = c("ID")]$predictions),
            # Return a risk score. Genotype combinations classified as H contribute +1,
            # genotype combinations classified as L contribute -1 and genotype combinations
            # classified as O contribute 0
-           "score" = return(predictions[MODEL<=top.results, list(predictions = sum(sign(PROB-0.5), na.rm = TRUE)),
+           "score" = return(predictions[MODEL <= top.results, list(predictions = sum(sign(PROB-0.5), na.rm = TRUE)),
                                         by = c("ID")]$predictions),
            # Return the score transformed to a [0, 1] interval
-           "scoreprob" = return(predictions[MODEL<=top.results, list(predictions = sum(sign(PROB-0.5), na.rm = TRUE)),
+           "scoreprob" = return(predictions[MODEL <= top.results, list(predictions = sum(sign(PROB-0.5), na.rm = TRUE)),
                                             by = c("ID")][, list(ID, predictions = range01(predictions))]$predictions))
   }
 
@@ -505,7 +505,7 @@ predict.mbmdrc <- function(object, newdata, type = "response", top.results, o.as
   checkmate::assertSubset(object$mbmdr$feature_names, colnames(newdata))
   checkmate::assertChoice(type, choices = c("response", "prob", "score", "scoreprob"),
                           add = assertions)
-  if(!missing(top.results)) {
+  if (!missing(top.results)) {
     checkmate::assertInt(top.results, lower = 1, upper = length(object$mbmdr),
                          add = assertions)
     top_results <- min(length(object$mbmdr), top.results)
@@ -523,8 +523,8 @@ predict.mbmdrc <- function(object, newdata, type = "response", top.results, o.as
                                 o.as.na = o.as.na,
                                 global.mean = object$global_mean, ...)
 
-  if(type %in% c("prob", "scoreprob")) {
-    predictions <- cbind(1-predictions, predictions)
+  if (type %in% c("prob", "scoreprob")) {
+    predictions <- cbind(1 - predictions, predictions)
     colnames(predictions) <- object$levels
   }
 
