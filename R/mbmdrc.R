@@ -62,7 +62,7 @@ mbmdrc <- function(formula, data,
                    adjustment = "NONE",
                    max.results = 1000L,
                    top.results = 1000L,
-                   folds, cv.loss, o.as.na,
+                   folds, cv.loss, o.as.na = FALSE,
                    dependent.variable.name,
                    verbose,
                    ...) {
@@ -475,10 +475,10 @@ predict.mdr_models <- function(object, newdata, type = "response", top.results, 
            # Return a risk score. Genotype combinations classified as H contribute +1,
            # genotype combinations classified as L contribute -1 and genotype combinations
            # classified as O contribute 0
-           "score" = return(predictions[MODEL <= top.results, list(predictions = sum(sign(PROB-0.5), na.rm = TRUE)),
+           "score" = return(predictions[MODEL <= top.results, list(predictions = sum(sign(PROB - 0.5), na.rm = TRUE)),
                                         by = c("ID")]$predictions),
            # Return the score transformed to a [0, 1] interval
-           "scoreprob" = return(predictions[MODEL <= top.results, list(predictions = sum(sign(PROB-0.5), na.rm = TRUE)),
+           "scoreprob" = return(predictions[MODEL <= top.results, list(predictions = sum(sign(PROB - 0.5), na.rm = TRUE)),
                                             by = c("ID")][, list(ID, predictions = range01(predictions))]$predictions))
   }
 
@@ -526,6 +526,8 @@ predict.mbmdrc <- function(object, newdata, type = "response", top.results, o.as
   if (type %in% c("prob", "scoreprob")) {
     predictions <- cbind(1 - predictions, predictions)
     colnames(predictions) <- object$levels
+  } else {
+    predictions <- factor(predictions, levels = c(0, 1), labels = object$levels)
   }
 
   return(predictions)
