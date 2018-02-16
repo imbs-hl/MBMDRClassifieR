@@ -414,7 +414,11 @@ predict.mdr_models <- function(object, newdata, type = "response", top.results, 
   # Iterate through MB-MDR models
   predictions <- rbindlist(lapply(1:num_models, function(m) {
     # Get genotypes
-    genotypes <- as.matrix(subset(newdata, select = object[[m]]$features))
+    genotypes <- apply(
+      X = subset(newdata, select = object[[m]]$features),
+      MARGIN = 2,
+      FUN = function(col) factor(col, labels = 0:(length(unique(col)) - 1))
+    )
     storage.mode(genotypes) <- "integer"
 
     # Construct bases for indexing
