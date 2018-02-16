@@ -433,10 +433,10 @@ predict.mdr_models <- function(object, newdata, type = "response", top.results, 
 
     if (!o.as.na) {
       # Set cell predictions to global for non-informative cells or feature combinations not present in training data
-      prob[object[[m]]$cell_labels[idx] == "O" | is.na(prob)] <- global.mean
+      prob[object[[m]]$cell_labels[idx] %in% c("N", "O") | is.na(prob)] <- global.mean
     } else {
       # Set cell predictions to NA for non-informative cells or feature combinations not present in training data
-      prob[object[[m]]$cell_labels[idx] == "O" | is.na(prob)] <- NA
+      prob[object[[m]]$cell_labels[idx] %in% c("N", "O") | is.na(prob)] <- NA
     }
 
     data.table(ID = 1:num_samples, PROB = prob)
