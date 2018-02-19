@@ -267,10 +267,10 @@ mbmdrc <- function(formula, data,
       # Predict on CV testing data
       data_cv_test <- data_final[fold_idx == f,]
       pred <- predict.mdr_models(object = mbmdr, newdata = data_cv_test,
-                            all = TRUE,
-                            o.as.na = o.as.na,
-                            global.mean = cv_global_mean,
-                            type = pred_type)
+                                 all = TRUE,
+                                 o.as.na = o.as.na,
+                                 global.mean = cv_global_mean,
+                                 type = pred_type)
 
       # Prepare CV loss for all top_result values
       response_cv_test <- response[fold_idx == f]
@@ -417,7 +417,11 @@ predict.mdr_models <- function(object, newdata, type = "response", top.results, 
     genotypes <- apply(
       X = subset(newdata, select = object[[m]]$features),
       MARGIN = 2,
-      FUN = function(col) factor(col, labels = 0:(length(unique(col)) - 1))
+      FUN = function(col) {
+        col <- factor(col)
+        levels(col) <- 0:(length(levels(col))-1)
+        return(col)
+      }
     )
     storage.mode(genotypes) <- "integer"
 
@@ -464,10 +468,10 @@ predict.mdr_models <- function(object, newdata, type = "response", top.results, 
                                   ID~TOPRESULTS, value.var = "SCORE")),
            # Return the score transformed to a [0, 1] interval
            "scoreprob" = return(dcast(predictions[, list(SCORE = cumsum(sign(PROB - 0.5)),
-                                                        TOPRESULTS = 1:max(MODEL)), by = c("ID")][, SCOREPROB := range01(SCORE),
-                                                                                                  by = c("TOPRESULTS")],
-                                     ID~TOPRESULTS,
-                                     value.var = "SCOREPROB")))
+                                                         TOPRESULTS = 1:max(MODEL)), by = c("ID")][, SCOREPROB := range01(SCORE),
+                                                                                                   by = c("TOPRESULTS")],
+                                      ID~TOPRESULTS,
+                                      value.var = "SCOREPROB")))
   } else {
     switch(type,
            # Round the mean case probability to 0 or 1 to return hard classification
